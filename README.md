@@ -106,4 +106,3 @@
 ```bash
 git clone https://github.com/BLACK-DRAGON-001/NullClass-Internship.git
 cd NullClass-Internship
-# Follow any backend/frontend run instructions here
