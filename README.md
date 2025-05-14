@@ -1,77 +1,109 @@
-# 🌐 NullClass Internship Project – Travel Booking Platform
+# 🌍 Travel Booking Platform – NullClass Internship Project
 
-## 📅 Internship Duration
-**April 20, 2025 – July 20, 2025**
-
----
-
-## 📌 Project Overview
-
-This project is a full-featured travel booking platform developed as part of the NullClass Internship. The platform includes real-world modules such as dynamic pricing, booking management, multilingual/multi-currency support, real-time support chat, and AI-driven recommendations.
-
-All features were implemented responsively and are integrated into a single web application.
-
-> 🔗 **Hosted URL:** [https://your-project-url.netlify.app]([https://your-project-url.netlify.app](https://app.netlify.com/projects/brilliant-tulumba-f6fa71/deploys/6824ad96651fbd21149154ac)
+## 👋 Developed by: Sarthak Dey  
+🎓 **Internship Provider:** NullClass  
+📅 **Duration:** April 20, 2025 – July 20, 2025  
 
 ---
 
-## 🚀 Tech Stack
+## 🔗 Live Project
+
+🚀 **Netlify Deployment:**  
+👉 [View Live Site](https://brilliant-tulumba-f6fa71.netlify.app)
+
+---
+
+## 🛠 Tech Stack Used
 
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+), Bootstrap 5
-- **Backend:** Node.js / Django / (based on your stack)
-- **Database:** MongoDB / PostgreSQL
-- **Hosting:** Netlify / Vercel
-- **Tools:** Git, GitHub, Postman, REST API, VS Code
+- **Backend:** (Add your stack – e.g., Django, Express.js, etc.)
+- **Database:** (e.g., PostgreSQL, MongoDB)
+- **Hosting:** Netlify
+- **Version Control:** Git & GitHub
 
 ---
 
-## ✅ Features Implemented
+## 📦 Features Implemented
 
-### 1. 📊 **Admin Dashboard Analytics**
-- Total bookings summary
-- Revenue visualization via charts
-- User activity logs and role-based access
-- Date range filtering and CSV export
+### 1. 📊 Admin Dashboard & Analytics
+- Total bookings, revenue chart, user logs
+- Export to CSV & date filtering
+- Role-based access
 
-### 2. 🌍 **Multi-Currency & Language Support**
-- Prices displayed in USD / EUR / GBP
-- UI available in EN / FR / ES
-- Auto-detect location and date/number formatting
-- User preference saving (localStorage or DB)
+### 2. 💱 Multi-Currency & Multi-Language Support
+- USD, EUR, GBP support
+- Languages: English, French, Spanish
+- Auto-location detect & locale formatting
+- Saves user preferences
 
-### 3. 📈 **Dynamic Pricing Engine**
-- Demand-based pricing (e.g., holiday surges)
-- Price history charts
-- "Price Freeze" feature with countdown timer
+### 3. 📈 Dynamic Pricing Engine
+- Adjusts prices based on demand (e.g., holidays)
+- Price history graphs
+- Limited-time “Price Freeze”
 
-### 4. 🔁 **Cancellation & Refund System**
-- User-initiated cancellation
-- Automatic refund calculations
-- Dropdown for cancellation reasons
-- Refund status tracking
+### 4. ❌ Cancellation & Refunds
+- Cancel from dashboard
+- Automatic and partial refunds
+- Reason dropdown & refund status tracker
 
-### 5. 💬 **Real-Time Support Chat**
-- FAQ Chatbot with predefined answers
-- Handoff to live agent
-- Sentiment detection for escalations
-- Email transcript and multilingual support
+### 5. 💬 Real-Time Support Chat
+- FAQ chatbot and live agent transfer
+- Sentiment analysis
+- Email transcripts & multilingual support
 
-### 6. ✈️ **Travel Package Bundles**
-- Pre-built and customizable travel packages
-- Discounts (10–15%) on bundles
-- Group discounts and social media sharing
+### 6. 🧳 Travel Package Bundles
+- Pre-built bundles (Flight + Hotel + Tour)
+- Custom bundles and group discounts
+- Social media sharing
 
-### 7. 🤖 **AI-Based Recommendations**
-- Personalized hotel/flight suggestions
-- “Why this recommendation?” tooltip
-- Collaborative filtering logic
-- Feedback loop for future improvement
+### 7. 🤖 AI Recommendations
+- Suggests based on past behavior
+- Collaborative filtering
+- Feedback loop & “Why this?” tooltip
 
 ---
 
-## 🧪 How to Run the Project Locally
+## 📱 Responsive Design
 
-1. Clone the repository  
-   ```bash
-   git clone https://github.com/BLACK-DRAGON-001/NullClass-Internship-project.git
-   cd nullclass-internship-project
+✅ Optimized for:
+- Mobile Devices  
+- Tablets  
+- Desktop  
+
+---
+
+## 📝 Internship Report Includes:
+- 🔹 Introduction
+- 🔹 Objectives & Background
+- 🔹 Activities & Tasks
+- 🔹 Skills & Technologies Used
+- 🔹 Challenges & Solutions
+- 🔹 Screenshots/Evidence
+- 🔹 Outcomes & Reflections
+
+✅ Report submitted as required.
+
+---
+
+## 📅 Daily Logs
+
+📌 All logs filled at: [dailyreport.nullclass.com](https://dailyreport.nullclass.com)  
+🗓️ Days off and non-working days also updated.
+
+---
+
+## ⚠️ Submission Notes
+
+- ✅ All 7 tasks integrated in one cohesive project
+- ✅ No plagiarism; individually researched & implemented
+- ✅ Submitted before the deadline for stipend + certificate eligibility
+- ❗ No resubmission requests applicable post-evaluation
+
+---
+
+## 📂 Run Locally
+
+```bash
+git clone https://github.com/BLACK-DRAGON-001/NullClass-Internship.git
+cd NullClass-Internship
+# Follow any backend/frontend run instructions here
