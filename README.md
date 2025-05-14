@@ -11,7 +11,7 @@ This project is a full-featured travel booking platform developed as part of the
 
 All features were implemented responsively and are integrated into a single web application.
 
-> 🔗 **Hosted URL:** [https://your-project-url.netlify.app]([https://your-project-url.netlify.app](https://app.netlify.com/projects/brilliant-tulumba-f6fa71/deploys/6824ad96651fbd21149154ac))
+> 🔗 **Hosted URL:** [https://your-project-url.netlify.app]([https://your-project-url.netlify.app](https://app.netlify.com/projects/brilliant-tulumba-f6fa71/deploys/6824ad96651fbd21149154ac)
 
 ---
 
