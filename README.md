@@ -99,6 +99,11 @@
 - ✅ Submitted before the deadline for stipend + certificate eligibility
 - ❗ No resubmission requests applicable post-evaluation
 
+📧 Contact
+Sarthak Dey
+📬 Email: sarthakdbb@gmail.com
+
+© 2025 NullClass Internship Project | Developed by Sarthak Dey
 ---
 
 ## 📂 Run Locally
