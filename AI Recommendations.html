@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel Recommendations</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #7bc6cc, #be93c5);
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  header h1 {
+    font-weight: 700;
+    font-size: 2.8rem;
+    color: #fff;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  header p {
+    font-weight: 300;
+    font-size: 1.2rem;
+    color: #eef4f7dd;
+    margin-top: 0.3rem;
+  }
+  .preferences {
+    background: rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(255,255,255,0.25);
+    max-width: 600px;
+    color: #fff;
+    font-weight: 500;
+    font-size: 1.1rem;
+  }
+  .preferences b {
+    color: #fafafa;
+  }
+
+  .recommendations {
+    max-width: 960px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 1.6rem;
+  }
+
+  .rec-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.15);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+  }
+  .rec-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+  }
+  .rec-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-bottom: 3px solid #7bc6cc;
+  }
+  .rec-content {
+    padding: 1rem 1.2rem 1.8rem;
+  }
+  .rec-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0 0 0.3rem;
+    color: #444;
+    user-select: none;
+  }
+  .rec-subtitle {
+    font-weight: 500;
+    color: #777;
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+  }
+  .rec-price {
+    font-weight: 700;
+    color: #1a9bfc;
+    font-size: 1.1rem;
+  }
+  .tooltip-container {
+    position: relative;
+    display: inline-block;
+    color: #777;
+    font-weight: 500;
+    font-size: 0.9rem;
+    user-select: none;
+  }
+  .tooltip-container .tooltip-text {
+    visibility: hidden;
+    width: 190px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 0.5rem 0.8rem;
+    position: absolute;
+    z-index: 20;
+    bottom: 110%;
+    left: 50%;
+    margin-left: -95px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    font-weight: 400;
+    font-size: 0.85rem;
+  }
+  .tooltip-container:hover .tooltip-text,
+  .tooltip-container:focus-within .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .feedback-buttons {
+    margin-top: 1rem;
+    display: flex;
+    gap: 8px;
+  }
+  button.feedback {
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: #ddd;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  button.feedback.selected {
+    background-color: #1a9bfc;
+    color: #fff;
+  }
+  button.feedback:hover:not(.selected) {
+    background-color: #b1d4fc;
+  }
+  button.feedback svg {
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+  }
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 1rem 0 0.8rem 0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  footer {
+    margin-top: 3rem;
+    color: #eef4f7dd;
+    font-size: 0.9rem;
+    font-weight: 300;
+    text-align: center;
+  }
+  @media (max-width: 400px) {
+    body {
+      padding: 1.2rem 0.8rem 3rem;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>AI Travel Recommendations</h1>
+  <p>Personalized hotel and flight suggestions tailored just for you!</p>
+</header>
+<section class="preferences">
+  You liked: <b id="liked-categories">beaches, culture</b>
+</section>
+<section class="recommendations" aria-label="Recommended hotels and flights">
+  <!-- Recommendations will be dynamically inserted here -->
+</section>
+<footer>
+  &copy; 2024 AI Travel Recommender &mdash; Made with ❤️
+</footer>
+
+<script>
+(() => {
+  // Simulated user history: liked categories (user preferences inferred from history)
+  let userPreferences = {
+    beaches: 3,    // weights to simulate preference strength
+    culture: 2,
+    mountains: 1,
+    adventure: 0.5,
+    city: 1.5,
+  };
+
+  // Mock database of hotels and flights with categories & relevant data
+  const hotels = [
+    {
+      id: "hotel_bali_beach",
+      name: "Sunny Beach Resort, Bali",
+      categories: ["beaches"],
+      price: "$250 / night",
+      img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=480&q=80",
+      description: "Relax on Bali's pristine sandy beaches with luxury amenities.",
+      why: "You liked beaches! Bali is famous for its stunning coastlines and beach resorts."
+    },
+    {
+      id: "hotel_paris_culture",
+      name: "Elegant City Hotel, Paris",
+      categories: ["culture", "city"],
+      price: "$320 / night",
+      img: "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=480&q=80",
+      description: "Enjoy Parisian culture, museums, and romantic streets.",
+      why: "You liked culture! Paris is a cultural capital loaded with museums and history."
+    },
+    {
+      id: "hotel_alps_mountains",
+      name: "Alpine Lodge, Swiss Alps",
+      categories: ["mountains", "adventure"],
+      price: "$280 / night",
+      img: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=480&q=80",
+      description: "Breathtaking mountain views and alpine adventures await.",
+      why: "You liked mountains and adventure! Swiss Alps offer great hiking and skiing."
+    },
+    {
+      id: "hotel_tokyo_city",
+      name: "Modern City Hotel, Tokyo",
+      categories: ["city", "culture", "adventure"],
+      price: "$290 / night",
+      img: "https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=480&q=80",
+      description: "Explore Tokyo's vibrant city life and rich culture.",
+      why: "You like city and culture! Tokyo offers a unique blend of the modern and traditional."
+    },
+    {
+      id: "hotel_cancun_beach",
+      name: "Ocean View Cancun",
+      categories: ["beaches", "adventure"],
+      price: "$270 / night",
+      img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=480&q=80",
+      description: "Dive into turquoise waters and lively beach parties.",
+      why: "You liked beaches and adventure! Cancun is famed for water sports and nightlife."
+    }
+  ];
+
+  const flights = [
+    {
+      id: "flight_to_bali",
+      name: "Flight to Bali, Indonesia",
+      categories: ["beaches", "adventure"],
+      price: "$700 roundtrip",
+      img: "https://images.unsplash.com/photo-1504457047680-c3e48d1f9f7b?auto=format&fit=crop&w=640&q=80",
+      description: "Fly directly to paradise beaches with excellent connections.",
+      why: "Because you love beaches and adventure destinations!"
+    },
+    {
+      id: "flight_to_paris",
+      name: "Flight to Paris, France",
+      categories: ["culture", "city"],
+      price: "$850 roundtrip",
+      img: "https://images.unsplash.com/photo-1468071174046-657d9d351a40?auto=format&fit=crop&w=640&q=80",
+      description: "Reach one of the most cultured cities worldwide.",
+      why: "You are interested in culture and city life - Paris is perfect for you."
+    },
+    {
+      id: "flight_to_zermatt",
+      name: "Flight to Zermatt, Switzerland",
+      categories: ["mountains", "adventure"],
+      price: "$780 roundtrip",
+      img: "https://images.unsplash.com/photo-1506973035872-a4e63a0b8a56?auto=format&fit=crop&w=640&q=80",
+      description: "Access the Swiss Alps for an unforgettable mountain experience.",
+      why: "You enjoy mountains and adventure, making this flight ideal."
+    },
+    {
+      id: "flight_to_tokyo",
+      name: "Flight to Tokyo, Japan",
+      categories: ["city", "culture", "adventure"],
+      price: "$920 roundtrip",
+      img: "https://images.unsplash.com/photo-1549924231-3ac32fdb3a4f?auto=format&fit=crop&w=640&q=80",
+      description: "Journey to a city packed with excitement and culture.",
+      why: "City and culture explorer? Tokyo awaits your discovery."
+    }
+  ];
+
+  // Store feedback as scores by item id
+  const feedbackScores = {};
+
+  // Utility to create tooltip with "Why this recommendation?"
+  function createTooltip(reason) {
+    const tooltipContainer = document.createElement('div');
+    tooltipContainer.className = 'tooltip-container';
+    tooltipContainer.setAttribute('tabindex', '0');
+    tooltipContainer.textContent = 'Why this recommendation?';
+
+    const tooltipText = document.createElement('span');
+    tooltipText.className = 'tooltip-text';
+    tooltipText.textContent = reason;
+
+    tooltipContainer.appendChild(tooltipText);
+    return tooltipContainer;
+  }
+
+  // Create feedback buttons (thumbs up / down)
+  function createFeedbackButtons(itemId) {
+    const container = document.createElement('div');
+    container.className = 'feedback-buttons';
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'feedback';
+    upBtn.title = 'Like this recommendation';
+    upBtn.innerHTML = '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32a.996.996 0 0 0-1.71-.7L7 9v12h9c.83 0 1.54-.5 1.84-1.22L23 12.99v-3z"/></svg>';
+    container.appendChild(upBtn);
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'feedback';
+    downBtn.title = 'Dislike this recommendation';
+    downBtn.innerHTML = '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22L1 10v3h4v12h4V9h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>';
+    container.appendChild(downBtn);
+
+    // Handle feedback click — update feedbackScores and recompute recommendations
+    upBtn.addEventListener('click', () => {
+      feedbackScores[itemId] = (feedbackScores[itemId] || 0) + 1;
+      upBtn.classList.add('selected');
+      downBtn.classList.remove('selected');
+      updateRecommendations();
+    });
+    downBtn.addEventListener('click', () => {
+      feedbackScores[itemId] = (feedbackScores[itemId] || 0) - 1;
+      downBtn.classList.add('selected');
+      upBtn.classList.remove('selected');
+      updateRecommendations();
+    });
+
+    return container;
+  }
+
+  // Score recommendation relevance based on userPreferences and feedback
+  function scoreRecommendation(item) {
+    // Base score = sum of matched categories weighted by user preference
+    let baseScore = 0;
+    item.categories.forEach(cat => {
+      baseScore += userPreferences[cat] || 0;
+    });
+    // Add feedback if any, weighted heavier
+    const feedbackScore = feedbackScores[item.id] || 0;
+    const weightedScore = baseScore + feedbackScore * 2;
+    return weightedScore;
+  }
+
+  // Sort and get top recommendations
+  function getTopRecommendations(items, count = 3) {
+    return items
+      .map(item => ({ item, score: scoreRecommendation(item) }))
+      .filter(entry => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, count)
+      .map(entry => entry.item);
+  }
+
+  // Render recommendations section
+  function updateRecommendations() {
+    const container = document.querySelector('.recommendations');
+    container.innerHTML = '';
+
+    // Show hotels title + recommendations
+    const hotelsTitle = document.createElement('h2');
+    hotelsTitle.className = 'section-title';
+    hotelsTitle.textContent = 'Recommended Hotels';
+    container.appendChild(hotelsTitle);
+
+    const topHotels = getTopRecommendations(hotels, 4);
+    if(topHotels.length === 0) {
+      const noHotels = document.createElement('p');
+      noHotels.style.color = '#eee';
+      noHotels.textContent = 'No hotel recommendations matched your preferences yet.';
+      container.appendChild(noHotels);
+    }
+    topHotels.forEach(hotel => {
+      const card = buildRecommendationCard(hotel);
+      container.appendChild(card);
+    });
+
+    // Show flights title + recommendations
+    const flightsTitle = document.createElement('h2');
+    flightsTitle.className = 'section-title';
+    flightsTitle.textContent = 'Recommended Flights';
+    container.appendChild(flightsTitle);
+
+    const topFlights = getTopRecommendations(flights, 3);
+    if(topFlights.length === 0) {
+      const noFlights = document.createElement('p');
+      noFlights.style.color = '#eee';
+      noFlights.textContent = 'No flight recommendations matched your preferences yet.';
+      container.appendChild(noFlights);
+    }
+    topFlights.forEach(flight => {
+      const card = buildRecommendationCard(flight);
+      container.appendChild(card);
+    });
+  }
+
+  // Build recommendation card element
+  function buildRecommendationCard(item) {
+    const card = document.createElement('article');
+    card.className = 'rec-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `${item.name}, price ${item.price}`);
+
+    const img = document.createElement('img');
+    img.className = 'rec-img';
+    img.src = item.img;
+    img.alt = item.name;
+    card.appendChild(img);
+
+    const content = document.createElement('div');
+    content.className = 'rec-content';
+
+    const title = document.createElement('h3');
+    title.className = 'rec-title';
+    title.textContent = item.name;
+    content.appendChild(title);
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'rec-subtitle';
+    subtitle.textContent = item.description;
+    content.appendChild(subtitle);
+
+    const price = document.createElement('p');
+    price.className = 'rec-price';
+    price.textContent = item.price;
+    content.appendChild(price);
+
+    const tooltip = createTooltip(item.why);
+    content.appendChild(tooltip);
+
+    const feedback = createFeedbackButtons(item.id);
+    content.appendChild(feedback);
+
+    card.appendChild(content);
+    return card;
+  }
+
+  // Display user liked categories
+  function updateUserPreferencesDisplay() {
+    const likedCats = Object.entries(userPreferences)
+      .filter(([, weight]) => weight > 0)
+      .map(([cat]) => cat)
+      .join(', ');
+    document.getElementById('liked-categories').textContent = likedCats || 'none';
+  }
+
+  // Initialize view
+  function init() {
+    updateUserPreferencesDisplay();
+    updateRecommendations();
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
+

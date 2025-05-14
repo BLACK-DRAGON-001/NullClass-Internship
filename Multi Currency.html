@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multi-Currency & Language Support</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #f0f0f5;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  header {
+    background: rgba(0, 0, 0, 0.35);
+    padding: 1.2rem 2rem;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(118, 75, 162, 0.6);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 1.2px;
+    color: #e0e0ff;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  }
+  main {
+    background: rgba(255 255 255 / 0.12);
+    flex: 1;
+    max-width: 960px;
+    margin: 2.5rem auto 3rem;
+    padding: 2rem 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+    backdrop-filter: blur(10px);
+  }
+  .selectors {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  label {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #dcdcff;
+    user-select: none;
+  }
+  select {
+    padding: 0.55rem 1.1rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 2px solid #b1a7e6;
+    background: rgba(255 255 255 / 0.9);
+    color: #3a2c6d;
+    cursor: pointer;
+    font-weight: 600;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 1px 2px 7px rgba(98, 85, 172, 0.25);
+  }
+  select:hover, select:focus {
+    border-color: #564bc3;
+    outline: none;
+    box-shadow: 0 0 6px 2px #8776e8aa;
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    background: rgba(255 255 255 / 0.18);
+    backdrop-filter: blur(10px);
+  }
+  thead tr {
+    background-color: #564bc3dd;
+    color: #e5e5ff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+  th, td {
+    padding: 1.15rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+  }
+  tbody tr {
+    color: #eee;
+    transition: background-color 0.3s ease;
+  }
+  tbody tr:nth-child(odd) {
+    background: rgba(255 255 255 / 0.07);
+  }
+  tbody tr:hover {
+    background: rgba(255 255 255 / 0.15);
+    cursor: default;
+  }
+  tfoot {
+    margin-top: 2rem;
+    text-align: center;
+    font-style: italic;
+    color: #dcdcffcc;
+  }
+  #current-date {
+    margin-top: 2.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-align: center;
+    color: #e3e3ffdd;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  }
+  footer {
+    background: rgba(0,0,0,0.25);
+    color: #ccccee;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem 0;
+    box-shadow: 0 -4px 10px rgba(118, 75, 162, 0.6);
+    user-select: none;
+  }
+  @media (max-width: 700px) {
+    .selectors {
+      gap: 1rem;
+    }
+    select {
+      width: 100%;
+      max-width: 180px;
+    }
+    table, thead, tbody, th, td, tr {
+      display: block;
+    }
+    thead tr {
+      position: absolute;
+      top: -9999px; left: -9999px;
+    }
+    tr {
+      margin-bottom: 1.25rem;
+      background: rgba(255 255 255 / 0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 18px #7767eaf2;
+      padding: 1rem 1rem 1.6rem 1rem;
+      color: #e6e6ffee;
+    }
+    td {
+      border: none;
+      border-bottom: 1px solid #ddd7ff44;
+      position: relative;
+      padding-left: 50%;
+      font-weight: 500;
+    }
+    td:before {
+      position: absolute;
+      top: 1rem;
+      left: 1.2rem;
+      width: 45%;
+      white-space: nowrap;
+      font-weight: 700;
+      color: #b9b0ffcc;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.75);
+    }
+    td:nth-of-type(1):before { content: attr(data-label-product); }
+    td:nth-of-type(2):before { content: attr(data-label-description); }
+    td:nth-of-type(3):before { content: attr(data-label-price); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Product Store</h1>
+</header>
+<main>
+  <div class="selectors" aria-label="Language and Currency selects">
+    <label for="language-select" id="language-label">Language:</label>
+    <select id="language-select" aria-labelledby="language-label">
+      <option value="en">English</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="it">Italiano</option>
+      <option value="zh">中文</option>
+      <option value="ja">日本語</option>
+      <option value="ru">Русский</option>
+      <option value="pt">Português</option>
+      <option value="ar">العربية</option>
+    </select>
+    <label for="currency-select" id="currency-label">Currency:</label>
+    <select id="currency-select" aria-labelledby="currency-label">
+      <option value="USD">USD - $</option>
+      <option value="EUR">EUR - €</option>
+      <option value="GBP">GBP - £</option>
+      <option value="JPY">JPY - ¥</option>
+      <option value="CNY">CNY - ¥</option>
+      <option value="INR">INR - ₹</option>
+      <option value="AUD">AUD - A$</option>
+      <option value="CAD">CAD - C$</option>
+      <option value="BRL">BRL - R$</option>
+      <option value="RUB">RUB - ₽</option>
+      <option value="AED">AED - د.إ</option>
+    </select>
+  </div>
+  <table aria-label="Product price list">
+    <thead>
+      <tr>
+        <th id="product-th">Product</th>
+        <th id="description-th">Description</th>
+        <th id="price-th">Price</th>
+      </tr>
+    </thead>
+    <tbody id="products-tbody">
+    </tbody>
+  </table>
+  <p id="current-date" aria-live="polite" aria-atomic="true"></p>
+</main>
+<footer>
+  &copy; 2024 Multi-Currency & Language Support Demo
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const translations = {
+    en: {
+      title: 'Product Store',
+      languageLabel: 'Language:',
+      currencyLabel: 'Currency:',
+      product: 'Product',
+      description: 'Description',
+      price: 'Price',
+      products: [
+        { id: 1, name: 'Coffee Mug', description: 'Ceramic mug, 350ml' },
+        { id: 2, name: 'Notebook', description: '100 pages, ruled' },
+        { id: 3, name: 'Bluetooth Speaker', description: 'Portable speaker, waterproof' },
+      ],
+      datePrefix: 'Today is',
+    },
+    es: {
+      title: 'Tienda de Productos',
+      languageLabel: 'Idioma:',
+      currencyLabel: 'Moneda:',
+      product: 'Producto',
+      description: 'Descripción',
+      price: 'Precio',
+      products: [
+        { id: 1, name: 'Taza de Café', description: 'Taza de cerámica, 350ml' },
+        { id: 2, name: 'Cuaderno', description: '100 páginas, rayado' },
+        { id: 3, name: 'Altavoz Bluetooth', description: 'Altavoz portátil, resistente al agua' },
+      ],
+      datePrefix: 'Hoy es',
+    },
+    fr: {
+      title: 'Boutique de Produits',
+      languageLabel: 'Langue :',
+      currencyLabel: 'Devise :',
+      product: 'Produit',
+      description: 'Description',
+      price: 'Prix',
+      products: [
+        { id: 1, name: 'Tasse à Café', description: 'Tasse en céramique, 350ml' },
+        { id: 2, name: 'Cahier', description: '100 pages, lignées' },
+        { id: 3, name: 'Haut-parleur Bluetooth', description: 'Haut-parleur portable, étanche' },
+      ],
+      datePrefix: "Aujourd'hui, c'est le",
+    },
+    de: {
+      title: 'Produktspeicher',
+      languageLabel: 'Sprache:',
+      currencyLabel: 'Währung:',
+      product: 'Produkt',
+      description: 'Beschreibung',
+      price: 'Preis',
+      products: [
+        { id: 1, name: 'Kaffeetasse', description: 'Keramiktasse, 350ml' },
+        { id: 2, name: 'Notizbuch', description: '100 Seiten, liniert' },
+        { id: 3, name: 'Bluetooth-Lautsprecher', description: 'Tragbarer Lautsprecher, wasserdicht' },
+      ],
+      datePrefix: 'Heute ist',
+    },
+    it: {
+      title: 'Negozio di Prodotti',
+      languageLabel: 'Lingua:',
+      currencyLabel: 'Valuta:',
+      product: 'Prodotto',
+      description: 'Descrizione',
+      price: 'Prezzo',
+      products: [
+        { id: 1, name: 'Tazza da Caffè', description: 'Tazza in ceramica, 350ml' },
+        { id: 2, name: 'Quaderno', description: '100 pagine, rigato' },
+        { id: 3, name: 'Altoparlante Bluetooth', description: 'Altoparlante portatile, impermeabile' },
+      ],
+      datePrefix: 'Oggi è',
+    },
+    zh: {
+      title: '产品商店',
+      languageLabel: '语言:',
+      currencyLabel: '货币:',
+      product: '产品',
+      description: '描述',
+      price: '价格',
+      products: [
+        { id: 1, name: '咖啡杯', description: '陶瓷杯，350毫升' },
+        { id: 2, name: '笔记本', description: '100页，带线' },
+        { id: 3, name: '蓝牙音箱', description: '便携式音箱，防水' },
+      ],
+      datePrefix: '今天是',
+    },
+    ja: {
+      title: '製品ストア',
+      languageLabel: '言語:',
+      currencyLabel: '通貨:',
+      product: '製品',
+      description: '説明',
+      price: '価格',
+      products: [
+        { id: 1, name: 'コーヒーマグ', description: 'セラミックマグ、350ml' },
+        { id: 2, name: 'ノート', description: '100ページ、罫線あり' },
+        { id: 3, name: 'ブルートゥーススピーカー', description: 'ポータブルスピーカー、防水' },
+      ],
+      datePrefix: '今日の日付は',
+    },
+    ru: {
+      title: 'Магазин товаров',
+      languageLabel: 'Язык:',
+      currencyLabel: 'Валюта:',
+      product: 'Товар',
+      description: 'Описание',
+      price: 'Цена',
+      products: [
+        { id: 1, name: 'Кофейная кружка', description: 'Керамическая кружка, 350 мл' },
+        { id: 2, name: 'Блокнот', description: '100 страниц, в линейку' },
+        { id: 3, name: 'Bluetooth колонка', description: 'Портативная колонка, водонепроницаемая' },
+      ],
+      datePrefix: 'Сегодня',
+    },
+    pt: {
+      title: 'Loja de Produtos',
+      languageLabel: 'Idioma:',
+      currencyLabel: 'Moeda:',
+      product: 'Produto',
+      description: 'Descrição',
+      price: 'Preço',
+      products: [
+        { id: 1, name: 'Caneca de Café', description: 'Caneca de cerâmica, 350ml' },
+        { id: 2, name: 'Caderno', description: '100 páginas, pautado' },
+        { id: 3, name: 'Caixa de Som Bluetooth', description: 'Caixa portátil, à prova d\'água' },
+      ],
+      datePrefix: 'Hoje é',
+    },
+    ar: {
+      title: 'متجر المنتجات',
+      languageLabel: 'اللغة:',
+      currencyLabel: 'العملة:',
+      product: 'المنتج',
+      description: 'الوصف',
+      price: 'السعر',
+      products: [
+        { id: 1, name: 'كوب قهوة', description: 'كوب سيراميك، 350 مل' },
+        { id: 2, name: 'دفتر ملاحظات', description: '100 صفحة، مسطرة' },
+        { id: 3, name: 'مكبر صوت بلوتوث', description: 'مكبر صوت محمول، مقاوم للماء' },
+      ],
+      datePrefix: 'التاريخ اليوم',
+    }
+  };
+
+  // Base prices in USD per product id
+  const basePricesUSD = {
+    1: 12.99,
+    2: 5.49,
+    3: 34.95,
+  };
+
+  // Exchange rates relative to USD (example static rates)
+  const exchangeRates = {
+    USD: 1,
+    EUR: 0.93,
+    GBP: 0.80,
+    JPY: 147.7,
+    CNY: 6.92,
+    INR: 82.7,
+    AUD: 1.54,
+    CAD: 1.43,
+    BRL: 4.83,
+    RUB: 90.7,
+    AED: 3.67,
+  };
+
+  // Currency symbols by code, including some multi-char
+  const currencySymbols = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    JPY: '¥',
+    CNY: '¥',
+    INR: '₹',
+    AUD: 'A$',
+    CAD: 'C$',
+    BRL: 'R$',
+    RUB: '₽',
+    AED: 'د.إ',
+  };
+
+  // HTML element references
+  const languageSelect = document.getElementById('language-select');
+  const currencySelect = document.getElementById('currency-select');
+  const productsTbody = document.getElementById('products-tbody');
+  const currentDateP = document.getElementById('current-date');
+  const titleH1 = document.getElementById('title');
+  const languageLabel = document.getElementById('language-label');
+  const currencyLabel = document.getElementById('currency-label');
+  const productTh = document.getElementById('product-th');
+  const descriptionTh = document.getElementById('description-th');
+  const priceTh = document.getElementById('price-th');
+
+  // Load saved prefs from localStorage
+  function getSavedPreferences() {
+    const prefs = localStorage.getItem('multiPrefs');
+    if (prefs) {
+      try {
+        return JSON.parse(prefs);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Save prefs in localStorage
+  function savePreferences(language, currency) {
+    localStorage.setItem('multiPrefs', JSON.stringify({ language, currency }));
+  }
+
+  // Detect browser locale, map language & default currency more comprehensively
+  function detectLocale() {
+    let lang = navigator.language || navigator.userLanguage || 'en';
+    lang = lang.toLowerCase();
+
+    // Mapping language to default currency
+    // Fallback language: 'en' currency: 'USD'
+    const map = [
+      { prefix: 'es', language: 'es', currency: 'EUR' },
+      { prefix: 'fr', language: 'fr', currency: 'EUR' },
+      { prefix: 'de', language: 'de', currency: 'EUR' },
+      { prefix: 'it', language: 'it', currency: 'EUR' },
+      { prefix: 'pt', language: 'pt', currency: 'EUR' },
+      { prefix: 'en-gb', language: 'en', currency: 'GBP' },
+      { prefix: 'en-au', language: 'en', currency: 'AUD' },
+      { prefix: 'en-ca', language: 'en', currency: 'CAD' },
+      { prefix: 'en-in', language: 'en', currency: 'INR' },
+      { prefix: 'zh', language: 'zh', currency: 'CNY' },
+      { prefix: 'ja', language: 'ja', currency: 'JPY' },
+      { prefix: 'ru', language: 'ru', currency: 'RUB' },
+      { prefix: 'ar', language: 'ar', currency: 'AED' },
+      { prefix: 'br', language: 'pt', currency: 'BRL' }, // Brazilian Portuguese
+    ];
+
+    for (const entry of map) {
+      if (lang.startsWith(entry.prefix)) {
+        return { language: entry.language, currency: entry.currency };
+      }
+    }
+
+    // Default fallback
+    if (lang.startsWith('en')) return { language: 'en', currency: 'USD' };
+
+    return { language: 'en', currency: 'USD' };
+  }
+
+  // Convert base USD price to target currency
+  function convertPrice(usdPrice, targetCurrency) {
+    const rate = exchangeRates[targetCurrency] || 1;
+    return usdPrice * rate;
+  }
+
+  // Format price per locale and currency robustly
+  function formatPrice(amount, currency, language) {
+    try {
+      return new Intl.NumberFormat(language, { style: 'currency', currency }).format(amount);
+    } catch {
+      const symbol = currencySymbols[currency] || '$';
+      return symbol + amount.toFixed(2);
+    }
+  }
+
+  // Format today's date per locale
+  function formatDate(language) {
+    const today = new Date();
+    try {
+      return new Intl.DateTimeFormat(language, { year: 'numeric', month: 'long', day: 'numeric' }).format(today);
+    } catch {
+      return today.toLocaleDateString();
+    }
+  }
+
+  // Render UI text and product table
+  function renderUI(language, currency) {
+    const t = translations[language] || translations['en'];
+
+    titleH1.textContent = t.title;
+    languageLabel.textContent = t.languageLabel;
+    currencyLabel.textContent = t.currencyLabel;
+    productTh.textContent = t.product;
+    descriptionTh.textContent = t.description;
+    priceTh.textContent = t.price;
+
+    productsTbody.innerHTML = '';
+    t.products.forEach(product => {
+      const tr = document.createElement('tr');
+      const priceVal = convertPrice(basePricesUSD[product.id], currency);
+      tr.innerHTML = `
+        <td data-label-product="${t.product}">${product.name}</td>
+        <td data-label-description="${t.description}">${product.description}</td>
+        <td data-label-price="${t.price}">${formatPrice(priceVal, currency, language)}</td>
+      `;
+      productsTbody.appendChild(tr);
+    });
+
+    currentDateP.textContent = t.datePrefix + ' ' + formatDate(language);
+  }
+
+  // Initialize UI with saved prefs or detect locale fallback
+  function init() {
+    let prefs = getSavedPreferences();
+    if (!prefs) {
+      prefs = detectLocale();
+    }
+    if (!translations[prefs.language]) prefs.language = 'en';
+    if (!exchangeRates[prefs.currency]) prefs.currency = 'USD';
+
+    languageSelect.value = prefs.language;
+    currencySelect.value = prefs.currency;
+
+    renderUI(prefs.language, prefs.currency);
+    savePreferences(prefs.language, prefs.currency);
+  }
+
+  // Event listeners for selectors
+  languageSelect.addEventListener('change', () => {
+    const newLang = languageSelect.value;
+    const curr = currencySelect.value;
+    renderUI(newLang, curr);
+    savePreferences(newLang, curr);
+  });
+
+  currencySelect.addEventListener('change', () => {
+    const lang = languageSelect.value;
+    const newCurr = currencySelect.value;
+    renderUI(lang, newCurr);
+    savePreferences(lang, newCurr);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
+

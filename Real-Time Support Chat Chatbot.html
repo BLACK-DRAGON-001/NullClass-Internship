@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Real-Time Support Chatbot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding:0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+  }
+  h1 {
+    margin: 1rem 0 0.5rem 0;
+    font-weight: 700;
+    color: #f0f0f0;
+    user-select: none;
+  }
+  #chat-container {
+    width: 360px;
+    background: #102a43;
+    border-radius: 15px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #chat-header {
+    background: #1a476f;
+    padding: 1rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #d0e6ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #language-select {
+    background: #2f5f9f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+  }
+  #chat-messages {
+    flex-grow: 1;
+    background: #114270;
+    padding: 1rem;
+    overflow-y: auto;
+    min-height: 360px;
+    user-select: text;
+  }
+  .message {
+    margin-bottom: 1rem;
+    max-width: 75%;
+    line-height: 1.3;
+    word-wrap: break-word;
+    padding: 0.6rem 1rem;
+    border-radius: 18px;
+    position: relative;
+    font-size: 0.9rem;
+  }
+  .message.user {
+    background: #2774f0;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .message.agent {
+    background: #4682b4;
+    color: #e4e8f1;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+  }
+  .message.typing {
+    font-style: italic;
+    color: #cbd7e2cc;
+  }
+  .sentiment {
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    font-size: 0.75rem;
+  }
+  #input-area {
+    background: #1a476f;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  #user-input {
+    flex-grow: 1;
+    border-radius: 24px;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    outline-offset: -2px;
+  }
+  #user-input:focus {
+    outline: 2px solid #4392ff;
+  }
+  #send-btn {
+    background: #2a79ff;
+    border: none;
+    border-radius: 50%;
+    padding: 0.45rem 0.6rem 0.55rem;
+    color: white;
+    cursor: pointer;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+  }
+  #send-btn:hover:not(:disabled) {
+    background: #1e5aec;
+  }
+  #send-btn:disabled {
+    background: #557dbf88;
+    cursor: default;
+  }
+  #actions-area {
+    background: #123963;
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #aac8ffcc;
+  }
+  #email-transcript-btn {
+    background: #2a79ff;
+    border: none;
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #email-transcript-btn:hover {
+    background: #1e5aec;
+  }
+  /* Scrollbar */
+  #chat-messages::-webkit-scrollbar {
+    width: 8px;
+  }
+  #chat-messages::-webkit-scrollbar-thumb {
+    background: #1a476f;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<h1>Real-Time Support Chat</h1>
+<div id="chat-container" role="main" aria-live="polite" aria-label="Support chat window">
+  <div id="chat-header">
+    Support Chatbot
+    <select id="language-select" aria-label="Select chat language" title="Select chat language">
+      <option value="en" selected>English</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+    </select>
+  </div>
+  <div id="chat-messages" tabindex="0" aria-live="polite" aria-atomic="false" role="log"></div>
+  <form id="chat-form" aria-label="Send message form">
+    <div id="input-area">
+      <input type="text" id="user-input" aria-label="Type your message" placeholder="Ask your question..." autocomplete="off" required />
+      <button type="submit" id="send-btn" aria-label="Send message">&#9658;</button>
+    </div>
+  </form>
+  <div id="actions-area" aria-live="polite">
+    <button id="email-transcript-btn" aria-label="Email chat transcript">Email Chat Transcript</button>
+    <span id="agent-status" aria-live="polite" style="font-style: italic;"></span>
+  </div>
+</div>
+
+<script>
+(() => {
+  const chatMessages = document.getElementById('chat-messages');
+  const chatForm = document.getElementById('chat-form');
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const emailBtn = document.getElementById('email-transcript-btn');
+  const languageSelect = document.getElementById('language-select');
+  const agentStatus = document.getElementById('agent-status');
+
+  // Chat state
+  let chatHistory = [];
+  let liveAgentMode = false;
+  let language = 'en';
+
+  // FAQ responses by language
+  const faqResponses = {
+    en: {
+      cancel: "To cancel your booking, log into your account, go to 'My Bookings', and click 'Cancel' next to your reservation.",
+      refund: "Refunds vary by booking type. Generally, cancellations made within 24 hours of booking are eligible for full refund.",
+      hi: "Hello! How can I assist you today?",
+      hours: "Our customer support operates 24/7 for your convenience.",
+      help: "Please ask your question, or type 'agent' to speak with a live support person.",
+      agent_prompt: "Connecting you to a live agent... Please wait.",
+      unknown: "Sorry, I didn't understand that. Could you please rephrase or type 'agent' to talk to a live agent?",
+      goodbye: "Thank you for chatting. Have a great day!"
+    },
+    es: {
+      cancel: "Para cancelar su reserva, inicie sesión en su cuenta, vaya a 'Mis Reservas' y haga clic en 'Cancelar' junto a su reserva.",
+      refund: "Los reembolsos varían según el tipo de reserva. Generalmente, las cancelaciones hechas en 24 horas cuentan con reembolso completo.",
+      hi: "¡Hola! ¿En qué puedo ayudarte hoy?",
+      hours: "Nuestro soporte está disponible 24/7 para su comodidad.",
+      help: "Por favor haga su pregunta, o escriba 'agente' para hablar con un representante.",
+      agent_prompt: "Conectándote con un agente en vivo... Por favor, espere.",
+      unknown: "Lo siento, no entendí eso. ¿Puedes reformular o escribir 'agente' para hablar con un agente en vivo?",
+      goodbye: "Gracias por chatear. ¡Que tenga un gran día!"
+    },
+    fr: {
+      cancel: "Pour annuler votre réservation, connectez-vous à votre compte, allez dans 'Mes réservations' et cliquez sur 'Annuler' à côté de votre réservation.",
+      refund: "Les remboursements varient selon le type de réservation. Généralement, les annulations faites dans les 24 heures sont remboursées intégralement.",
+      hi: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
+      hours: "Notre support client est disponible 24h/24 et 7j/7 pour vous aider.",
+      help: "Veuillez poser votre question, ou tapez 'agent' pour parler à un agent en direct.",
+      agent_prompt: "Nous vous connectons à un agent en direct... Veuillez patienter.",
+      unknown: "Désolé, je n'ai pas compris. Pouvez-vous reformuler ou taper 'agent' pour parler à un agent en direct ?",
+      goodbye: "Merci pour cette conversation. Bonne journée !"
+    }
+  };
+
+  // Basic sentiment analysis keywords
+  const positiveKeywords = ['thank', 'thanks', 'good', 'great', 'awesome', 'happy', 'love', 'helpful'];
+  const negativeKeywords = ['bad', 'problem', 'issue', 'angry', 'upset', 'hate', 'frustrated', 'worst', 'disappointed'];
+
+  // Icons for sentiment
+  const sentimentIcons = {
+    positive: '😊',
+    neutral: '😐',
+    negative: '😞'
+  };
+
+  // Append message to chat
+  function appendMessage(text, sender = 'agent', sentiment = 'neutral', typing=false) {
+    const msgElem = document.createElement('div');
+    msgElem.classList.add('message', sender);
+    if(typing) msgElem.classList.add('typing');
+    msgElem.textContent = text;
+
+    // Sentiment icon for agent or user messages (not typing)
+    if(!typing) {
+      const sentiSpan = document.createElement('span');
+      sentiSpan.className = 'sentiment';
+      sentiSpan.textContent = sentimentIcons[sentiment];
+      msgElem.appendChild(sentiSpan);
+    }
+
+    chatMessages.appendChild(msgElem);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Save to history (exclude typing message)
+    if(!typing){
+      chatHistory.push({sender, text});
+    }
+  }
+
+  // Detect sentiment for user message
+  function analyzeSentiment(text) {
+    const t = text.toLowerCase();
+    let posCount = 0, negCount = 0;
+    for(const word of positiveKeywords){
+      if(t.includes(word)) posCount++;
+    }
+    for(const word of negativeKeywords){
+      if(t.includes(word)) negCount++;
+    }
+    if(posCount > negCount) return 'positive';
+    if(negCount > posCount) return 'negative';
+    return 'neutral';
+  }
+
+  // Simple NLP for FAQ intent detection (by keywords)
+  function detectIntent(text) {
+    const t = text.toLowerCase();
+    if(t.includes('cancel')) return 'cancel';
+    if(t.includes('refund')) return 'refund';
+    if(t.includes('agent') || t.includes('live agent') || t.includes('support person')) return 'agent';
+    if(t.includes('hi') || t.includes('hello') || t.includes('hey')) return 'hi';
+    if(t.includes('hours') || t.includes('open')) return 'hours';
+    if(t.includes('help') || t.includes('assistance')) return 'help';
+    if(t.includes('bye') || t.includes('thank you') || t.includes('thanks')) return 'goodbye';
+    return 'unknown';
+  }
+
+  // Typing indicator element
+  let typingElem = null;
+  function showTypingIndicator() {
+    typingElem = document.createElement('div');
+    typingElem.className = 'message agent typing';
+    typingElem.textContent = 'Support is typing...';
+    chatMessages.appendChild(typingElem);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function hideTypingIndicator() {
+    if(typingElem) {
+      chatMessages.removeChild(typingElem);
+      typingElem = null;
+    }
+  }
+
+  // Simulate delay for agent response
+  function simulateTypingAndReply(text, sentiment='neutral', delay=1200) {
+    showTypingIndicator();
+    setTimeout(() => {
+      hideTypingIndicator();
+      appendMessage(text, 'agent', sentiment);
+    }, delay);
+  }
+
+  // Live agent canned replies (simulate)
+  const liveAgentReplies = [
+    {
+      en: "Hi, I'm your live support agent. How can I help you?",
+      es: "Hola, soy tu agente de soporte en vivo. ¿En qué puedo ayudarte?",
+      fr: "Bonjour, je suis votre agent de support en direct. Comment puis-je vous aider ?"
+    },
+    {
+      en: "Could you please provide more details?",
+      es: "¿Podría proporcionar más detalles, por favor?",
+      fr: "Pourriez-vous fournir plus de détails, s'il vous plaît ?"
+    },
+    {
+      en: "I'm looking into your issue now.",
+      es: "Estoy investigando su problema ahora.",
+      fr: "Je regarde votre problème maintenant."
+    },
+    {
+      en: "Thank you for your patience.",
+      es: "Gracias por su paciencia.",
+      fr: "Merci pour votre patience."
+    },
+    {
+      en: "Is there anything else I can assist you with?",
+      es: "¿Hay algo más en lo que pueda ayudarle?",
+      fr: "Y a-t-il autre chose avec laquelle je peux vous aider ?"
+    },
+    {
+      en: "Have a great day!",
+      es: "¡Que tenga un gran día!",
+      fr: "Passez une excellente journée !"
+    }
+  ];
+
+  // Handler for user message
+  async function handleUserMessage(text) {
+    const sentiment = analyzeSentiment(text);
+
+    appendMessage(text, 'user', sentiment);
+
+    if(liveAgentMode){
+      // Simulate live agent replies with delay
+      for(let reply of liveAgentReplies){
+        await new Promise(res => setTimeout(res, 1500));
+        appendMessage(reply[language], 'agent', 'neutral');
+      }
+      return;
+    }
+
+    const intent = detectIntent(text);
+    switch(intent){
+      case 'agent':
+        liveAgentMode = true;
+        simulateTypingAndReply(faqResponses[language].agent_prompt);
+        break;
+      case 'cancel':
+      case 'refund':
+      case 'hi':
+      case 'hours':
+      case 'help':
+      case 'goodbye':
+        simulateTypingAndReply(faqResponses[language][intent] || faqResponses[language].unknown);
+        if (intent === 'goodbye'){
+          liveAgentMode = false;
+        }
+        break;
+      default:
+        simulateTypingAndReply(faqResponses[language].unknown);
+        break;
+    }
+  }
+
+  // Email transcript simulate: popup alert with transcript
+  function emailTranscript() {
+    if(chatHistory.length === 0){
+      alert("No chat messages to send.");
+      return;
+    }
+    let transcriptText = "Chat Transcript:\n\n";
+    chatHistory.forEach(({sender, text}) => {
+      transcriptText += (sender === 'user' ? "You: " : "Support: ") + text + "\n";
+    });
+    transcriptText += "\n* This is a simulated transcript. In real app, this would send an email.";
+    alert(transcriptText);
+  }
+
+  // Init default greeting
+  function initChat() {
+    appendMessage(faqResponses[language].hi);
+  }
+
+  // Event listeners
+  chatForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const val = userInput.value.trim();
+    if(val.length === 0) return;
+    userInput.value = '';
+    sendBtn.disabled = true;
+    handleUserMessage(val).finally(() => {
+      sendBtn.disabled = false;
+      userInput.focus();
+    });
+  });
+
+  emailBtn.addEventListener('click', () => {
+    emailTranscript();
+  });
+
+  languageSelect.addEventListener('change', (e) => {
+    language = e.target.value;
+    // Reset chat and greet in new language
+    chatHistory = [];
+    liveAgentMode = false;
+    chatMessages.innerHTML = '';
+    initChat();
+    userInput.focus();
+  });
+
+  // Accessibility: focus chat messages container on load so user can tab through
+  window.addEventListener('load', () => {
+    userInput.focus();
+    initChat();
+  });
+
+
+})();
+</script>
+</body>
+</html>

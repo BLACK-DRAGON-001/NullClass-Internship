@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Travel Package Bundles with Discounts</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #f4f4f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 3rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  header h1 {
+    font-weight: 700;
+    font-size: 2.8rem;
+    user-select: none;
+    text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+  }
+  header p {
+    font-weight: 300;
+    font-size: 1.3rem;
+    margin-top: 0.3rem;
+    color: #dcd6f7cc;
+  }
+
+  main {
+    max-width: 960px;
+    width: 100%;
+  }
+
+  .package-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    padding: 1rem 1.5rem 1.8rem;
+    transition: transform 0.3s ease;
+  }
+  .package-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 36px rgba(0,0,0,0.5);
+  }
+
+  .package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .package-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #eaeaff;
+  }
+  .package-discount {
+    background: #ff5e62;
+    background: linear-gradient(45deg, #ff5e62, #ff9966);
+    color: white;
+    padding: 0.2rem 0.8rem;
+    font-weight: 700;
+    border-radius: 12px;
+    font-size: 1rem;
+    user-select: none;
+  }
+
+  .bundle-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .item-card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  }
+  .item-card.selected {
+    box-shadow: 0 6px 20px #ff9966;
+    background-color: rgba(255,153,102,0.25);
+  }
+  .item-img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-bottom: 3px solid #ff9966;
+    user-select: none;
+  }
+  .item-info {
+    padding: 0.8rem 1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .item-title {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+    user-select: none;
+  }
+  .item-type {
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: #ffcba4cc;
+    margin-bottom: 0.5rem;
+    user-select: none;
+  }
+  .item-price {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffcc88;
+    user-select: none;
+  }
+
+  label.traveler-count {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    user-select: none;
+    color: #eaeaffdd;
+  }
+  input[type=number] {
+    margin-left: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.1rem;
+    width: 60px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .summary {
+    background: #ff9966dd;
+    border-radius: 12px;
+    padding: 1rem 1.3rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #340f00;
+    margin-bottom: 1.5rem;
+    user-select: none;
+    text-align: center;
+    box-shadow: 0 0 10px #ff9966bb;
+  }
+  button.share-btn {
+    background: #5efc82;
+    border: none;
+    border-radius: 30px;
+    padding: 0.8rem 1.8rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    color: #084d02;
+    box-shadow: 0 4px 18px #3ec815cc;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  button.share-btn:hover {
+    background: #34bf3f;
+    color: #e6ffdf;
+  }
+
+  @media (max-width: 450px){
+    .bundle-items {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Travel Package Bundles</h1>
+  <p>Pre-built bundles with exclusive 10–15% discounts. Customize your package and save more with group discounts!</p>
+</header>
+<main>
+  <!-- Container for all packages -->
+  <section id="packages-container" aria-label="Travel package bundles">
+    <!-- Packages dynamically inserted here -->
+  </section>
+</main>
+
+<script>
+(() => {
+  // Bundles data: each bundle has several items (flight, hotel, tour)
+  const bundles = [
+    {
+      id: 'bundle_bali_adventure',
+      name: 'Bali Adventure Package',
+      discountPercent: 15,
+      items: [
+        {
+          id: 'flight_bali',
+          name: 'Flight to Bali',
+          type: 'Flight',
+          price: 700,
+          img: 'https://images.unsplash.com/photo-1504457047680-c3e48d1f9f7b?auto=format&fit=crop&w=480&q=80',
+          description: 'Direct flight to Bali, Indonesia.'
+        },
+        {
+          id: 'hotel_bali_resort',
+          name: 'Beachside Resort Bali',
+          type: 'Hotel',
+          price: 250,
+          img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=480&q=80',
+          description: 'Luxurious resort steps from the beach.'
+        },
+        {
+          id: 'tour_bali_trekking',
+          name: 'Jungle Trekking Tour',
+          type: 'Tour',
+          price: 100,
+          img: 'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=480&q=80',
+          description: 'Explore Bali\'s lush jungle on guided trekking.'
+        }
+      ]
+    },
+    {
+      id: 'bundle_paris_culture',
+      name: 'Paris Culture & Cuisine',
+      discountPercent: 12,
+      items: [
+        {
+          id: 'flight_paris',
+          name: 'Flight to Paris',
+          type: 'Flight',
+          price: 850,
+          img: 'https://images.unsplash.com/photo-1468071174046-657d9d351a40?auto=format&fit=crop&w=480&q=80',
+          description: 'Direct flight to Paris, France.'
+        },
+        {
+          id: 'hotel_paris_boutique',
+          name: 'Boutique Hotel Paris',
+          type: 'Hotel',
+          price: 320,
+          img: 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=480&q=80',
+          description: 'Charming hotel in the heart of Paris.'
+        },
+        {
+          id: 'tour_paris_food',
+          name: 'Culinary Walking Tour',
+          type: 'Tour',
+          price: 130,
+          img: 'https://images.unsplash.com/photo-1543352634-5a6279f5ed0b?auto=format&fit=crop&w=480&q=80',
+          description: 'Taste French cuisine on this guided tour.'
+        }
+      ]
+    },
+    {
+      id: 'bundle_alps_winter',
+      name: 'Swiss Alps Winter Escape',
+      discountPercent: 14,
+      items: [
+        {
+          id: 'flight_zermatt',
+          name: 'Flight to Zermatt',
+          type: 'Flight',
+          price: 780,
+          img: 'https://images.unsplash.com/photo-1506973035872-a4e63a0b8a56?auto=format&fit=crop&w=480&q=80',
+          description: 'Fly to the heart of Swiss Alps.'
+        },
+        {
+          id: 'hotel_alpine_lodge',
+          name: 'Cozy Alpine Lodge',
+          type: 'Hotel',
+          price: 280,
+          img: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=480&q=80',
+          description: 'Rustic lodge with mountain views.'
+        },
+        {
+          id: 'tour_alps_ski',
+          name: 'Skiing Package',
+          type: 'Tour',
+          price: 150,
+          img: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=480&q=80',
+          description: 'Ski lessons and access to slopes.'
+        }
+      ]
+    }
+  ];
+
+  // Group discount tiers: additional discount on base discount for traveler count
+  // e.g., for 1 traveler, no extra; 2 or 3 travelers: 3%; 4 or more:5%
+  function getGroupDiscountExtra(travelerCount) {
+    if(travelerCount <= 1) return 0;
+    if(travelerCount <= 3) return 3;
+    return 5;
+  }
+
+  // Format currency
+  function formatCurrency(value) {
+    return `$${value.toFixed(2)}`;
+  }
+
+  // Create package card DOM element
+  function createPackageCard(bundle) {
+    const card = document.createElement('section');
+    card.className = 'package-card';
+    card.setAttribute('aria-label', `${bundle.name} - travel package`);
+
+    // Header with title and discount
+    const header = document.createElement('div');
+    header.className = 'package-header';
+
+    const title = document.createElement('h2');
+    title.className = 'package-title';
+    title.textContent = bundle.name;
+    header.appendChild(title);
+
+    const discount = document.createElement('div');
+    discount.className = 'package-discount';
+    discount.textContent = `${bundle.discountPercent}% OFF`;
+    header.appendChild(discount);
+
+    card.appendChild(header);
+
+    // Traveler count control
+    const label = document.createElement('label');
+    label.className = 'traveler-count';
+    label.textContent = 'Travelers:';
+    label.htmlFor = `traveler-count-${bundle.id}`;
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = 1;
+    input.max = 20;
+    input.value = 1;
+    input.id = `traveler-count-${bundle.id}`;
+    input.setAttribute('aria-label', `Number of travelers for ${bundle.name}`);
+    label.appendChild(input);
+
+    card.appendChild(label);
+
+    // Bundle items grid
+    const bundleItemsContainer = document.createElement('div');
+    bundleItemsContainer.className = 'bundle-items';
+
+    // Track selection state for items: all selected initially
+    const selectionState = {};
+    bundle.items.forEach(item => {
+      selectionState[item.id] = true;
+    });
+
+    // Create item cards inside bundle
+    bundle.items.forEach(item => {
+      const itemCard = document.createElement('div');
+      itemCard.className = 'item-card selected';
+      itemCard.tabIndex = 0;
+      itemCard.setAttribute('role', 'button');
+      itemCard.setAttribute('aria-pressed', 'true');
+      itemCard.setAttribute('aria-label', `${item.type}: ${item.name}, Price: ${formatCurrency(item.price)}`);
+      itemCard.dataset.itemId = item.id;
+
+      const img = document.createElement('img');
+      img.className = 'item-img';
+      img.src = item.img;
+      img.alt = item.name;
+      itemCard.appendChild(img);
+
+      const info = document.createElement('div');
+      info.className = 'item-info';
+
+      const title = document.createElement('h3');
+      title.className = 'item-title';
+      title.textContent = item.name;
+      info.appendChild(title);
+
+      const type = document.createElement('div');
+      type.className = 'item-type';
+      type.textContent = item.type;
+      info.appendChild(type);
+
+      const price = document.createElement('div');
+      price.className = 'item-price';
+      price.textContent = formatCurrency(item.price);
+      info.appendChild(price);
+
+      itemCard.appendChild(info);
+
+      // Toggle select on click or keyboard Enter/Space
+      itemCard.addEventListener('click', () => {
+        toggleSelection(item.id, itemCard, selectionState, bundle, input, summaryEl);
+      });
+      itemCard.addEventListener('keydown', (e) => {
+        if(e.key === ' ' || e.key === 'Enter'){
+          e.preventDefault();
+          toggleSelection(item.id, itemCard, selectionState, bundle, input, summaryEl);
+        }
+      });
+
+      bundleItemsContainer.appendChild(itemCard);
+    });
+
+    card.appendChild(bundleItemsContainer);
+
+    // Summary cost & savings
+    const summaryEl = document.createElement('div');
+    summaryEl.className = 'summary';
+    summaryEl.setAttribute('aria-live', 'polite');
+
+    card.appendChild(summaryEl);
+
+    // Share button
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-btn';
+    shareBtn.textContent = 'Share this bundle';
+    shareBtn.setAttribute('aria-label', `Share ${bundle.name} package on social media`);
+    shareBtn.addEventListener('click', () => {
+      const url = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(`Check out this amazing ${bundle.name} package with great discounts!`);
+      // For demo, just alert share message
+      alert(`Share on social media:\n\n${text}\n\n${url}`);
+    });
+    card.appendChild(shareBtn);
+
+    // Listen for traveler count changes
+    input.addEventListener('input', () => {
+      let val = parseInt(input.value);
+      if (isNaN(val) || val < 1) val = 1;
+      if (val > 20) val = 20;
+      input.value = val;
+      updateSummary(selectionState, bundle, val, bundle.discountPercent, summaryEl);
+    });
+
+    // Initial summary update
+    updateSummary(selectionState, bundle, parseInt(input.value), bundle.discountPercent, summaryEl);
+
+    return card;
+  }
+
+  // Toggle item selection and update summary
+  function toggleSelection(itemId, itemCard, selectionState, bundle, travelerCountInput, summaryEl) {
+    const isSelected = selectionState[itemId];
+    if (isSelected) {
+      // At least 1 item must remain selected
+      const selectedCount = Object.values(selectionState).filter(s => s).length;
+      if (selectedCount <= 1) {
+        // Prevent deselect last item
+        itemCard.style.outline = '2px solid #ff5e62';
+        setTimeout(() => { itemCard.style.outline = ''; }, 500);
+        return;
+      }
+    }
+    selectionState[itemId] = !isSelected;
+    if(selectionState[itemId]) {
+      itemCard.classList.add('selected');
+      itemCard.setAttribute('aria-pressed', 'true');
+    } else {
+      itemCard.classList.remove('selected');
+      itemCard.setAttribute('aria-pressed', 'false');
+    }
+    updateSummary(selectionState, bundle, parseInt(travelerCountInput.value), bundle.discountPercent, summaryEl);
+  }
+
+  // Update cost summary with selection, travelers count & discounts
+  function updateSummary(selectionState, bundle, travelerCount, baseDiscountPercent, summaryEl) {
+    const selectedItems = bundle.items.filter(item => selectionState[item.id]);
+    if(selectedItems.length === 0) {
+      summaryEl.textContent = "Select at least one item to see pricing.";
+      return;
+    }
+    const baseTotal = selectedItems.reduce((acc, item) => acc + item.price, 0);
+    const groupExtraDiscount = getGroupDiscountExtra(travelerCount);
+    const totalDiscountPercent = baseDiscountPercent + groupExtraDiscount;
+    const discountedTotal = baseTotal * (1 - totalDiscountPercent / 100);
+
+    const travelPlural = travelerCount > 1 ? 'travelers' : 'traveler';
+
+    summaryEl.innerHTML =
+      `For ${travelerCount} ${travelPlural}:<br>` +
+      `Base price: <del>${formatCurrency(baseTotal * travelerCount)}</del><br>` +
+      `Bundle discount: ${baseDiscountPercent}% + Group discount: ${groupExtraDiscount}% = <strong>${totalDiscountPercent}% OFF</strong><br>` +
+      `<span style="font-size:1.3rem; color:#fff; text-shadow: 0 0 6px #ffcc66;">Final price: ${formatCurrency(discountedTotal * travelerCount)}</span>`;
+  }
+
+  // Initialize all packages
+  function init() {
+    const container = document.getElementById('packages-container');
+    bundles.forEach(bundle => {
+      const card = createPackageCard(bundle);
+      container.appendChild(card);
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
+

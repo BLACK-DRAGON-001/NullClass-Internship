@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin Dashboard Analytics</title>
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f8fafc;
+    color: #2f3e59;
+    display: flex;
+    min-height: 100vh;
+  }
+  /* Sidebar */
+  nav {
+    width: 280px;
+    background: #2f3e59;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  nav header {
+    padding: 2rem 2rem 1.75rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    border-bottom: 1px solid #3a4c70;
+    text-align: center;
+    letter-spacing: 0.06em;
+    user-select: none;
+    color: #e8ebf5;
+  }
+  nav .role-container {
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid #3a4c70;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+  }
+  nav .role-label {
+    font-weight: 600;
+    font-size: 1rem;
+    user-select: none;
+  }
+  nav select#role-select {
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    background: #4c5f80;
+    color: #e8ebf5;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  nav select#role-select:hover, nav select#role-select:focus {
+    background: #6180b1;
+    outline: none;
+    color: #fff;
+  }
+  nav ul.menu {
+    list-style: none;
+    margin: 0;
+    padding: 1.5rem 2rem;
+    flex-grow: 1;
+  }
+  nav ul.menu li {
+    padding: 0.9rem 0;
+    user-select: none;
+    cursor: default;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #a1acc9;
+    border-radius: 6px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  nav ul.menu li.active,
+  nav ul.menu li:hover {
+    color: #ffffff;
+    background: #3f557c;
+    box-shadow: inset 2px 0 8px #506ca3;
+  }
+
+  main {
+    flex-grow: 1;
+    padding: 2.5rem 3.5rem;
+    overflow-y: auto;
+    min-width: 0;
+    background: #ffffff;
+    box-shadow: -3px 0 10px rgba(47,62,89,0.12);
+    border-radius: 0 16px 16px 0;
+    transition: background-color 0.3s ease;
+  }
+  main header {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a2538;
+    margin-bottom: 2rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* Cards container */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
+    gap: 1.8rem;
+    margin-bottom: 3rem;
+  }
+  .card {
+    background: #f4f7fa;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(47,62,89,0.07);
+    padding: 1.8rem 2.2rem;
+    text-align: center;
+    color: #2f3e59;
+    user-select: none;
+    transition: box-shadow 0.3s ease;
+  }
+  .card:hover, .card:focus-within {
+    box-shadow: 0 10px 25px rgba(47,62,89,0.15);
+  }
+  .card h3 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #556a8a;
+  }
+  .card p {
+    margin: 0.5rem 0 0;
+    font-weight: 700;
+    font-size: 2.1rem;
+    color: #1a2538;
+    letter-spacing: 0.02em;
+  }
+
+  /* Charts section */
+  section.charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(340px,1fr));
+    gap: 2.8rem;
+    margin-bottom: 3rem;
+  }
+  .chart-card {
+    background: #f9fbfd;
+    border-radius: 16px;
+    padding: 2rem 2.8rem;
+    box-shadow: 0 6px 25px rgba(47,62,89,0.07);
+    transition: box-shadow 0.3s ease;
+  }
+  .chart-card:hover, .chart-card:focus-within {
+    box-shadow: 0 12px 35px rgba(47,62,89,0.12);
+  }
+  .chart-card h4 {
+    margin: 0 0 1.6rem;
+    font-weight: 700;
+    color: #3a485e;
+    font-size: 1.5rem;
+  }
+  canvas {
+    display: block;
+    max-width: 100%;
+    height: 300px;
+  }
+
+  /* Logs table */
+  section.logs {
+    background: #f9fbfd;
+    border-radius: 16px;
+    padding: 2rem 2.8rem;
+    box-shadow: 0 6px 25px rgba(47,62,89,0.08);
+    color: #3a485e;
+  }
+  section.logs h4 {
+    margin: 0 0 1.8rem;
+    font-weight: 700;
+    font-size: 1.5rem;
+  }
+
+  .filters {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.8rem;
+    align-items: flex-end;
+  }
+  .filters label {
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    color: #556a8a;
+  }
+  .filters input[type="date"] {
+    margin-top: 0.45rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+    border: 1.8px solid #c8d1dd;
+    border-radius: 6px;
+    outline-offset: 0;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background: white;
+    color: #2f3e59;
+  }
+  .filters input[type="date"]:focus {
+    border-color: #5c85d6;
+    box-shadow: 0 0 8px 2px #8cb4ffbb;
+  }
+  .filters button {
+    padding: 0.6rem 1.6rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    border: none;
+    color: white;
+    background: #5c85d6;
+    box-shadow: 0 5px 15px rgba(92, 133, 214, 0.5);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .filters button:hover:not(:disabled),
+  .filters button:focus:not(:disabled) {
+    background: #406ecf;
+    box-shadow: 0 8px 22px rgba(64,110,207,0.7);
+    outline: none;
+  }
+  .filters button:disabled {
+    background: #a6b7cd;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  table.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+    color: #2f3e59;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+    box-shadow: 0 7px 35px rgba(47,62,89,0.1);
+  }
+  table.logs-table thead th, table.logs-table tbody td {
+    border-bottom: 1.3px solid #d7dbdf;
+    padding: 0.75rem 1.3rem;
+    text-align: left;
+  }
+  table.logs-table thead th {
+    background: #e7eefc;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    user-select: none;
+  }
+  table.logs-table tbody tr {
+    background: #ffffff;
+    transition: background-color 0.25s ease;
+  }
+  table.logs-table tbody tr:nth-child(odd) {
+    background: #f6f9ff;
+  }
+  table.logs-table tbody tr:hover {
+    background: #d0dbf8;
+    color: #1c2440;
+  }
+
+  /* Role-based visibility */
+  .restricted {
+    display: none;
+  }
+
+  /* Scrollbar styling for logs */
+  section.logs table {
+    max-height: 340px;
+    overflow-y: auto;
+    display: block;
+  }
+
+  /* Responsive */
+  @media (max-width: 860px) {
+    main {
+      padding: 2rem 2rem;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    section.charts {
+      grid-template-columns: 1fr;
+      gap: 1.8rem;
+    }
+    .cards {
+      grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+      gap: 1.4rem;
+    }
+    nav {
+      width: 220px;
+    }
+  }
+  @media (max-width: 480px) {
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .filters label, .filters button {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<nav aria-label="Primary Navigation">
+  <header>Admin Dashboard</header>
+  <div class="role-container">
+    <label for="role-select" class="role-label">Role:</label>
+    <select id="role-select" aria-label="Select user role">
+      <option value="admin" selected>Admin</option>
+      <option value="manager">Manager</option>
+      <option value="viewer">Viewer</option>
+    </select>
+  </div>
+  <ul class="menu" aria-hidden="true">
+    <li class="active">Dashboard</li>
+  </ul>
+</nav>
+<main>
+  <header>Dashboard Analytics</header>
+
+  <!-- Summary Info Cards -->
+  <section class="cards" aria-label="Summary info">
+    <article class="card" id="total-bookings-card" tabindex="0" aria-describedby="total-bookings-desc">
+      <h3>Total Bookings</h3>
+      <p id="total-bookings">0</p>
+      <span id="total-bookings-desc" class="sr-only">Number of total bookings</span>
+    </article>
+    <article class="card" id="total-revenue-card" tabindex="0" aria-describedby="total-revenue-desc">
+      <h3>Total Revenue</h3>
+      <p id="total-revenue">$0</p>
+      <span id="total-revenue-desc" class="sr-only">Total revenue in dollars</span>
+    </article>
+    <article class="card restricted" id="popular-hotels-card" tabindex="0" aria-describedby="popular-hotels-desc">
+      <h3>Popular Hotels</h3>
+      <p id="popular-hotels">Loading...</p>
+      <span id="popular-hotels-desc" class="sr-only">Most popular hotels info</span>
+    </article>
+    <article class="card restricted" id="popular-flights-card" tabindex="0" aria-describedby="popular-flights-desc">
+      <h3>Popular Flights</h3>
+      <p id="popular-flights">Loading...</p>
+      <span id="popular-flights-desc" class="sr-only">Most popular flights info</span>
+    </article>
+  </section>
+
+  <!-- Charts -->
+  <section class="charts" aria-label="Analytics charts">
+    <section class="chart-card" id="revenue-chart-section" tabindex="0" aria-describedby="revenue-chart-desc">
+      <h4>Revenue Over Time</h4>
+      <canvas id="revenue-chart" aria-describedby="revenue-chart-desc"></canvas>
+      <span id="revenue-chart-desc" class="sr-only">Line chart showing revenue over the last months</span>
+    </section>
+    <section class="chart-card restricted" id="popular-hotels-chart-section" tabindex="0" aria-describedby="popular-hotels-chart-desc">
+      <h4>Popular Hotels</h4>
+      <canvas id="popular-hotels-chart" aria-describedby="popular-hotels-chart-desc"></canvas>
+      <span id="popular-hotels-chart-desc" class="sr-only">Bar chart of top popular hotels by bookings</span>
+    </section>
+    <section class="chart-card restricted" id="popular-flights-chart-section" tabindex="0" aria-describedby="popular-flights-chart-desc">
+      <h4>Popular Flights</h4>
+      <canvas id="popular-flights-chart" aria-describedby="popular-flights-chart-desc"></canvas>
+      <span id="popular-flights-chart-desc" class="sr-only">Bar chart of top popular flights by bookings</span>
+    </section>
+  </section>
+
+  <!-- User Activity Logs -->
+  <section class="logs" aria-label="User activity logs">
+    <h4>User Activity Logs</h4>
+    <form class="filters" aria-label="Filter logs by date">
+      <label for="from-date">From:
+        <input type="date" id="from-date" name="fromDate" aria-describedby="from-date-desc" />
+      </label>
+      <label for="to-date">To:
+        <input type="date" id="to-date" name="toDate" aria-describedby="to-date-desc" />
+      </label>
+      <button type="button" id="filter-logs-btn" aria-label="Filter logs by date range">Filter</button>
+      <button type="button" id="export-csv-btn" aria-label="Export logs as CSV">Export CSV</button>
+    </form>
+    <table class="logs-table" role="grid" aria-live="polite" aria-relevant="all">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">User</th>
+          <th scope="col">Action</th>
+          <th scope="col">Details</th>
+        </tr>
+      </thead>
+      <tbody id="logs-table-body"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const rolePermissions = {
+    admin: {
+      popularHotelsFlights: true,
+      exportData: true,
+    },
+    manager: {
+      popularHotelsFlights: true,
+      exportData: false,
+    },
+    viewer: {
+      popularHotelsFlights: false,
+      exportData: false,
+    }
+  };
+
+  const revenueData = [
+    { month: 'Nov', year: 2023, revenue: 102450.57 },
+    { month: 'Dec', year: 2023, revenue: 138730.49 },
+    { month: 'Jan', year: 2024, revenue: 146820.14 },
+    { month: 'Feb', year: 2024, revenue: 153400.32 },
+    { month: 'Mar', year: 2024, revenue: 164310.78 },
+    { month: 'Apr', year: 2024, revenue: 172980.89 },
+  ];
+
+  const popularHotels = [
+    { name: 'Grand Palace Hotel', bookings: 529 },
+    { name: 'Seaside Resort', bookings: 483 },
+    { name: 'Mountain View Inn', bookings: 427 },
+    { name: 'City Center Suites', bookings: 345 },
+  ];
+
+  const popularFlights = [
+    { name: 'NYC - LAX', bookings: 680 },
+    { name: 'LHR - CDG', bookings: 560 },
+    { name: 'SFO - HNL', bookings: 479 },
+    { name: 'DXB - BOM', bookings: 417 },
+  ];
+
+  const logs = [
+    { date: '2024-04-25T14:22:00Z', user: 'jdoe', action: 'Login', details: 'Successful login' },
+    { date: '2024-04-25T13:54:12Z', user: 'mpatel', action: 'Booking', details: 'Booked hotel Grand Palace, 2 rooms' },
+    { date: '2024-04-25T12:01:33Z', user: 'jdoe', action: 'Logout', details: 'User logged out' },
+    { date: '2024-04-24T18:30:47Z', user: 'ajones', action: 'Modify Booking', details: 'Changed flight from NYC - LAX to SFO - HNL' },
+    { date: '2024-04-24T16:40:03Z', user: 'mpatel', action: 'Cancel Booking', details: 'Cancelled flight LHR - CDG' },
+    { date: '2024-04-23T09:45:22Z', user: 'bwang', action: 'Login', details: 'Successful login' },
+    { date: '2024-04-22T21:16:58Z', user: 'ajones', action: 'Booking', details: 'Booked flight DXB - BOM' },
+    { date: '2024-04-21T11:05:43Z', user: 'jdoe', action: 'Password Change', details: 'Changed password' },
+    { date: '2024-04-20T15:23:10Z', user: 'bwang', action: 'Logout', details: 'User logged out' },
+    { date: '2024-04-20T10:00:00Z', user: 'mpatel', action: 'Login', details: 'Successful login' },
+    { date: '2024-04-19T08:34:19Z', user: 'ajones', action: 'Booking', details: 'Booked hotel Mountain View Inn, 1 room' },
+    { date: '2024-04-18T17:45:54Z', user: 'jdoe', action: 'Login', details: 'Successful login' },
+    { date: '2024-04-18T16:12:30Z', user: 'mpatel', action: 'Modify Booking', details: 'Upgraded room to suite at City Center Suites' },
+    { date: '2024-04-17T13:24:45Z', user: 'bwang', action: 'Booking', details: 'Booked flight SFO - HNL' },
+    { date: '2024-04-16T09:55:00Z', user: 'ajones', action: 'Logout', details: 'User logged out' },
+    { date: '2024-04-15T22:11:20Z', user: 'mpatel', action: 'Password Reset', details: 'Reset password via email' },
+    { date: '2024-04-15T19:33:12Z', user: 'bwang', action: 'Booking', details: 'Booked hotel Seaside Resort, 3 rooms' },
+    { date: '2024-04-14T14:27:00Z', user: 'ajones', action: 'Login', details: 'Successful login' },
+    { date: '2024-04-13T10:10:07Z', user: 'jdoe', action: 'Cancel Booking', details: 'Cancelled hotel booking at Mountain View Inn' },
+    { date: '2024-04-12T08:00:00Z', user: 'mpatel', action: 'Logout', details: 'User logged out' },
+  ];
+
+  const totalBookingsEl = document.getElementById('total-bookings');
+  const totalRevenueEl = document.getElementById('total-revenue');
+  const popularHotelsEl = document.getElementById('popular-hotels');
+  const popularFlightsEl = document.getElementById('popular-flights');
+  const logsTableBody = document.getElementById('logs-table-body');
+  const filterFromDate = document.getElementById('from-date');
+  const filterToDate = document.getElementById('to-date');
+  const filterLogsBtn = document.getElementById('filter-logs-btn');
+  const exportCsvBtn = document.getElementById('export-csv-btn');
+  const roleSelect = document.getElementById('role-select');
+
+  let revenueChartInstance = null;
+  let popularHotelsChartInstance = null;
+  let popularFlightsChartInstance = null;
+
+  function calcTotalBookings() {
+    const hotelBookings = popularHotels.reduce((acc, h) => acc + h.bookings, 0);
+    const flightBookings = popularFlights.reduce((acc, f) => acc + f.bookings, 0);
+    return hotelBookings + flightBookings;
+  }
+
+  function calcTotalRevenue() {
+    return revenueData.reduce((acc, month) => acc + month.revenue, 0);
+  }
+
+  function formatUSD(amount) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD'}).format(amount);
+  }
+
+  function renderSummary(role) {
+    totalBookingsEl.textContent = calcTotalBookings();
+    totalRevenueEl.textContent = formatUSD(calcTotalRevenue());
+
+    if (rolePermissions[role].popularHotelsFlights) {
+      popularHotelsEl.textContent = popularHotels[0].name + ` (${popularHotels[0].bookings} bookings)`;
+      popularFlightsEl.textContent = popularFlights[0].name + ` (${popularFlights[0].bookings} bookings)`;
+      showElements('.restricted');
+    } else {
+      popularHotelsEl.textContent = '-';
+      popularFlightsEl.textContent = '-';
+      hideElements('.restricted');
+    }
+  }
+
+  function showElements(selector) {
+    document.querySelectorAll(selector).forEach(el => {
+      el.style.display = '';
+      el.removeAttribute('aria-hidden');
+    });
+  }
+
+  function hideElements(selector) {
+    document.querySelectorAll(selector).forEach(el => {
+      el.style.display = 'none';
+      el.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  function createRevenueChart() {
+    const ctx = document.getElementById('revenue-chart').getContext('2d');
+    if (revenueChartInstance) revenueChartInstance.destroy();
+    revenueChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: revenueData.map(d => `${d.month} ${d.year}`),
+        datasets: [{
+          label: 'Revenue (USD)',
+          data: revenueData.map(d => d.revenue),
+          borderColor: '#4a73d5',
+          backgroundColor: 'rgba(74,115,213,0.3)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#4a73d5', font: { weight: '600' }, callback: val => '$' + val.toLocaleString() },
+            grid: { color: '#e8eefb' }
+          },
+          x: {
+            grid: { color: '#e8eefb' },
+            ticks: { color: '#2f3e59', font: { weight: '600' } }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: '#4a73d5', font: { weight: '600', size: 14 } }
+          },
+          tooltip: {
+            backgroundColor: '#4a73d5',
+            titleColor: 'white',
+            bodyColor: 'white',
+            padding: 8,
+            cornerRadius: 8,
+            callbacks: {
+              label: ctx => `Revenue: ${formatUSD(ctx.parsed.y)}`
+            }
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          intersect: false
+        }
+      }
+    });
+  }
+
+  function createPopularHotelsChart() {
+    const ctx = document.getElementById('popular-hotels-chart').getContext('2d');
+    if (popularHotelsChartInstance) popularHotelsChartInstance.destroy();
+    popularHotelsChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: popularHotels.map(h => h.name),
+        datasets: [{
+          label: 'Bookings',
+          data: popularHotels.map(h => h.bookings),
+          backgroundColor: '#5069d6',
+          hoverBackgroundColor: '#344aaf',
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#5069d6', font: { weight: '600' } },
+            grid: { color: '#e8eefb' }
+          },
+          x: {
+            ticks: { color: '#2f3e59', font: { weight: '600' } },
+            grid: { color: '#e8eefb' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#5069d6',
+            titleColor: 'white',
+            bodyColor: 'white',
+            cornerRadius: 6,
+            callbacks: {
+              label: ctx => `${ctx.parsed.y} Bookings`
+            }
+          }
+        },
+        animation: { duration: 850, easing: 'easeOutQuart' }
+      }
+    });
+  }
+
+  function createPopularFlightsChart() {
+    const ctx = document.getElementById('popular-flights-chart').getContext('2d');
+    if (popularFlightsChartInstance) popularFlightsChartInstance.destroy();
+    popularFlightsChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: popularFlights.map(f => f.name),
+        datasets: [{
+          label: 'Bookings',
+          data: popularFlights.map(f => f.bookings),
+          backgroundColor: '#79a4f3',
+          hoverBackgroundColor: '#557ac7',
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#79a4f3', font: { weight: '600' } },
+            grid: { color: '#e8eefb' }
+          },
+          x: {
+            ticks: { color: '#2f3e59', font: { weight: '600' } },
+            grid: { color: '#e8eefb' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#79a4f3',
+            titleColor: 'white',
+            bodyColor: 'white',
+            cornerRadius: 6,
+            callbacks: {
+              label: ctx => `${ctx.parsed.y} Bookings`
+            }
+          }
+        },
+        animation: { duration: 850, easing: 'easeOutQuart' }
+      }
+    });
+  }
+
+  function renderLogs(filteredLogs) {
+    logsTableBody.innerHTML = '';
+    if (filteredLogs.length === 0) {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td colspan="4" style="text-align:center; font-style: italic;">No activity found.</td>`;
+      logsTableBody.appendChild(row);
+      return;
+    }
+    filteredLogs.forEach(log => {
+      const tr = document.createElement('tr');
+      const dateStr = new Date(log.date).toLocaleString();
+      tr.innerHTML = `
+        <td>${dateStr}</td>
+        <td>${log.user}</td>
+        <td>${log.action}</td>
+        <td>${log.details}</td>
+      `;
+      logsTableBody.appendChild(tr);
+    });
+  }
+
+  function filterLogs() {
+    const fromDateVal = filterFromDate.value;
+    const toDateVal = filterToDate.value;
+
+    let filtered = [...logs];
+
+    if (fromDateVal) {
+      const fromTS = new Date(fromDateVal).getTime();
+      filtered = filtered.filter(log => new Date(log.date).getTime() >= fromTS);
+    }
+    if (toDateVal) {
+      const toTS = new Date(toDateVal);
+      toTS.setHours(23,59,59,999);
+      filtered = filtered.filter(log => new Date(log.date).getTime() <= toTS.getTime());
+    }
+    renderLogs(filtered);
+  }
+
+  function exportLogsCSV() {
+    const rows = [];
+    const fromDateVal = filterFromDate.value;
+    const toDateVal = filterToDate.value;
+    let filtered = [...logs];
+    if (fromDateVal) {
+      const fromTS = new Date(fromDateVal).getTime();
+      filtered = filtered.filter(log => new Date(log.date).getTime() >= fromTS);
+    }
+    if (toDateVal) {
+      const toTS = new Date(toDateVal);
+      toTS.setHours(23,59,59,999);
+      filtered = filtered.filter(log => new Date(log.date).getTime() <= toTS.getTime());
+    }
+    if (filtered.length === 0) {
+      alert('No logs to export.');
+      return;
+    }
+    rows.push(['Date','User','Action','Details']);
+    filtered.forEach(log => {
+      const dateStr = new Date(log.date).toLocaleString();
+      function sanitizeCSVField(field) {
+        if (field == null) return '';
+        let f = field.toString();
+        if (f.includes('"')) f = f.replace(/"/g,'""');
+        if (f.includes(',') || f.includes('\n') || f.includes('"')) f = `"${f}"`;
+        return f;
+      }
+      rows.push([
+        sanitizeCSVField(dateStr),
+        sanitizeCSVField(log.user),
+        sanitizeCSVField(log.action),
+        sanitizeCSVField(log.details),
+      ]);
+    });
+    const csvContent = rows.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `user_activity_logs_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function applyRoleAccess(role) {
+    const perms = rolePermissions[role];
+    if (!perms) return;
+    if (perms.popularHotelsFlights) {
+      showElements('.restricted');
+    } else {
+      hideElements('.restricted');
+    }
+    exportCsvBtn.disabled = !perms.exportData;
+  }
+
+  function init() {
+    const defaultRole = roleSelect.value || 'admin';
+    renderSummary(defaultRole);
+    createRevenueChart();
+    createPopularHotelsChart();
+    createPopularFlightsChart();
+    renderLogs(logs);
+    applyRoleAccess(defaultRole);
+  }
+
+  filterLogsBtn.addEventListener('click', () => filterLogs());
+  exportCsvBtn.addEventListener('click', () => exportLogsCSV());
+
+  roleSelect.addEventListener('change', () => {
+    const role = roleSelect.value;
+    renderSummary(role);
+    applyRoleAccess(role);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

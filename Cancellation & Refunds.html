@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Booking Cancellation & Refund Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    min-height: 100vh;
+  }
+  header {
+    padding: 1rem 2rem;
+    text-align: center;
+    background: rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.8rem;
+  }
+  main {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .booking-list {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    padding: 1rem;
+  }
+  .booking-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .booking-item:last-child {
+    border-bottom: none;
+  }
+  .booking-info {
+    max-width: 65%;
+  }
+  .booking-info h3 {
+    margin: 0 0 0.3rem 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+  }
+  .booking-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #d8d8d8;
+  }
+  button.cancel-btn {
+    background: #ff6347;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button.cancel-btn:disabled {
+    background: #888;
+    cursor: not-allowed;
+  }
+  button.cancel-btn:hover:not(:disabled) {
+    background: #ff4123;
+  }
+  .refund-status {
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+    font-weight: 600;
+  }
+  .refund-status.pending {
+    color: #ffa500;
+  }
+  .refund-status.completed {
+    color: #32cd32;
+  }
+  /* Modal styles */
+  #modalOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+  }
+  #modal {
+    background: #2f2f4f;
+    border-radius: 14px;
+    width: 400px;
+    max-width: 90%;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    color: #fff;
+  }
+  #modal h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  select, input[type="number"] {
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+  .modal-buttons button {
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  button.btn-confirm {
+    background: #32cd32;
+    color: #fff;
+  }
+  button.btn-cancel {
+    background: #444660;
+    color: #ddd;
+  }
+  button.btn-confirm:disabled {
+    background: #888;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Your Bookings</h1>
+</header>
+<main>
+  <section class="booking-list" aria-label="List of user bookings">
+    <!-- Booking items added dynamically -->
+  </section>
+</main>
+
+<!-- Modal for cancellation -->
+<div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+  <div id="modal">
+    <h2 id="modalTitle">Cancel Booking</h2>
+    <p id="modalDesc">Please select a cancellation reason and review your refund.</p>
+    <form id="cancelForm">
+      <label for="cancelReason">Cancellation Reason</label>
+      <select name="cancelReason" id="cancelReason" required>
+        <option value="" disabled selected>Choose a reason...</option>
+        <option value="Change of plans">Change of plans</option>
+        <option value="Found a better option">Found a better option</option>
+        <option value="Illness">Illness</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="refundAmount">Refund Amount (USD)</label>
+      <input type="number" id="refundAmount" name="refundAmount" min="0" step="0.01" readonly />
+
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" id="modalCancelBtn">Cancel</button>
+        <button type="submit" class="btn-confirm" id="modalConfirmBtn" disabled>Confirm Cancellation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+  // Sample bookings data - id, title, datetime, price (USD), status, refund info
+  const bookings = [
+    {
+      id: 1,
+      title: "Flight to New York",
+      datetime: "2024-06-15T15:00:00",
+      price: 300,
+      status: "active",
+      refund: { amount: 0, status: null, reason: null }
+    },
+    {
+      id: 2,
+      title: "Hotel Reservation - Miami",
+      datetime: "2024-06-16T20:00:00",
+      price: 500,
+      status: "active",
+      refund: { amount: 0, status: null, reason: null }
+    },
+    {
+      id: 3,
+      title: "Train to San Francisco",
+      datetime: "2024-06-14T09:30:00",
+      price: 120,
+      status: "cancelled",
+      refund: { amount: 60, status: "completed", reason: "Change of plans" }
+    }
+  ];
+
+  const bookingListEl = document.querySelector(".booking-list");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const cancelReasonSelect = document.getElementById("cancelReason");
+  const refundAmountInput = document.getElementById("refundAmount");
+  const modalCancelBtn = document.getElementById("modalCancelBtn");
+  const modalConfirmBtn = document.getElementById("modalConfirmBtn");
+  const cancelForm = document.getElementById("cancelForm");
+
+  let selectedBooking = null;
+
+  // Utility: format datetime nicely
+  function formatDateTime(datetimeStr) {
+    const dt = new Date(datetimeStr);
+    return dt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  }
+
+  // Calculate refund based on cancellation policy
+  // Policy: If canceled less than 24h before booking time, 50% refund. Otherwise 100% refund.
+  function calculateRefund(booking) {
+    const now = new Date();
+    const bookingTime = new Date(booking.datetime);
+    const diffMs = bookingTime - now;
+    const hoursDiff = diffMs / (1000 * 60 * 60);
+
+    if (hoursDiff < 24 && hoursDiff > 0) {
+      // less than 24 hours before booking time - partial refund 50%
+      return Number((booking.price * 0.5).toFixed(2));
+    } else if (hoursDiff <= 0) {
+      // after booking time, no refund
+      return 0;
+    } else {
+      // more than 24 hours - full refund
+      return Number(booking.price.toFixed(2));
+    }
+  }
+
+  // Render the list of bookings
+  function renderBookings() {
+    bookingListEl.innerHTML = "";
+    bookings.forEach(b => {
+      const bookingItem = document.createElement("article");
+      bookingItem.classList.add("booking-item");
+      bookingItem.setAttribute("aria-live", "polite");
+      bookingItem.innerHTML = `
+        <div class="booking-info" tabindex="0">
+          <h3>${b.title}</h3>
+          <p><strong>Booking Time:</strong> ${formatDateTime(b.datetime)}</p>
+          <p><strong>Price:</strong> $${b.price.toFixed(2)}</p>
+          <p><strong>Status:</strong> ${b.status.charAt(0).toUpperCase() + b.status.slice(1)}</p>
+          ${
+            b.status === "cancelled"
+              ? `<p class="refund-status ${b.refund.status}"><strong>Refund:</strong> $${b.refund.amount.toFixed(2)} - ${b.refund.status.charAt(0).toUpperCase() + b.refund.status.slice(1)}<br /><strong>Reason:</strong> ${b.refund.reason}</p>`
+              : ""
+          }
+        </div>
+        <div>
+          <button class="cancel-btn" data-id="${b.id}" ${b.status === "cancelled" ? "disabled" : ""}>Cancel Booking</button>
+        </div>
+      `;
+      bookingListEl.appendChild(bookingItem);
+    });
+    // Attach cancel button listeners
+    document.querySelectorAll(".cancel-btn").forEach(btn => {
+      btn.addEventListener("click", onClickCancelBooking);
+    });
+  }
+
+  // Cancel button click handler - open modal
+  function onClickCancelBooking(e) {
+    const bookingId = Number(e.target.dataset.id);
+    selectedBooking = bookings.find(b => b.id === bookingId);
+    if (!selectedBooking) return;
+
+    cancelReasonSelect.value = "";
+    refundAmountInput.value = "";
+    refundAmountInput.readOnly = true;
+    modalConfirmBtn.disabled = true;
+
+    const refund = calculateRefund(selectedBooking);
+    refundAmountInput.value = refund.toFixed(2);
+
+    modalOverlay.style.display = "flex";
+    cancelReasonSelect.focus();
+  }
+
+  // Close modal function
+  function closeModal() {
+    modalOverlay.style.display = "none";
+    selectedBooking = null;
+  }
+
+  // Handle reason change to enable confirm button if reason selected
+  cancelReasonSelect.addEventListener("change", () => {
+    modalConfirmBtn.disabled = cancelReasonSelect.value === "";
+  });
+
+  // Cancel modal button
+  modalCancelBtn.addEventListener("click", closeModal);
+
+  // Handle form submission (confirm cancellation)
+  cancelForm.addEventListener("submit", e => {
+    e.preventDefault();
+    if (!selectedBooking) return;
+    const reason = cancelReasonSelect.value;
+    const refundAmt = parseFloat(refundAmountInput.value) || 0;
+
+    // Update booking status and refund info
+    selectedBooking.status = "cancelled";
+    selectedBooking.refund = {
+      amount: refundAmt,
+      status: "pending",
+      reason
+    };
+
+    renderBookings();
+    closeModal();
+
+    // Simulate refund processing async update to completed status after 2 sec
+    setTimeout(() => {
+      selectedBooking.refund.status = "completed";
+      renderBookings();
+    }, 2000);
+  });
+
+  // Initial render
+  renderBookings();
+})();
+</script>
+</body>
+</html>
+

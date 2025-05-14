@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dynamic Pricing Engine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+  body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background: #121212;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(90deg, #007BFF, #00D4FF);
+    padding: 1rem 2rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    color: white;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.6);
+  }
+
+  main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  section.product {
+    background: #1f1f1f;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgb(0 123 255 / 0.5);
+    padding: 1rem 1.5rem 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  h2 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #00d4ff;
+    user-select:none;
+  }
+
+  .price-display {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #00ff7f;
+    user-select:none;
+  }
+
+  .base-price {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 1rem;
+  }
+
+  button.freeze-btn {
+    background: #ff4081;
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 0.8rem;
+    user-select:none;
+  }
+
+  button.freeze-btn:disabled {
+    background: #555;
+    cursor: default;
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 160px !important;
+    user-select:none;
+  }
+
+  footer {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+    background: #0b0b0b;
+    color: #777;
+    user-select:none;
+  }
+
+  .holiday-toggle {
+    margin: 1rem auto 2rem auto;
+    max-width: 320px;
+    text-align: center;
+    background: #007BFF;
+    color: white;
+    border-radius: 50px;
+    cursor: pointer;
+    padding: 0.5rem 1.5rem;
+    font-weight: 700;
+    user-select:none;
+    box-shadow: 0 4px 15px rgba(0,123,255,0.6);
+    transition: background-color 0.3s ease;
+    display: inline-block;
+  }
+  .holiday-toggle.active {
+    background: #FF9800;
+    box-shadow: 0 4px 15px rgba(255,152,0,0.7);
+  }
+</style>
+</head>
+<body>
+<header>Dynamic Pricing Engine 🚀</header>
+<main id="products-container">
+  <!-- Products will be dynamically inserted here -->
+</main>
+<div style="text-align:center;">
+  <button id="toggleHoliday" class="holiday-toggle" title="Toggle Holiday Mode (+20% price)">Holiday Mode: OFF</button>
+</div>
+<footer>© 2024 Dynamic Pricing Engine - Prices update in real-time</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (() => {
+    // Product data - base prices
+    const products = [
+      { id: 1, name: 'Wireless Headphones', basePrice: 99.99 },
+      { id: 2, name: 'Smartwatch Pro', basePrice: 199.95 },
+      { id: 3, name: '4K Action Camera', basePrice: 249.50 },
+      { id: 4, name: 'Gaming Laptop', basePrice: 1299.00 },
+      { id: 5, name: 'Electric Scooter', basePrice: 499.99 }
+    ];
+
+    // holiday mode flag
+    let holidayMode = false;
+
+    // Price increase factor during holidays (+20%)
+    const holidayMultiplier = 1.20;
+
+    // Price freeze duration in milliseconds
+    const freezeDurationMs = 30000; // 30 seconds
+
+    // Store product state: {priceHistory: [], freezeUntil: timestamp|null}
+    const productStates = new Map();
+
+    // Container for products
+    const container = document.getElementById('products-container');
+
+    // Create product cards with canvas for price history chart and freeze button
+    function createProductCard(product) {
+      const section = document.createElement('section');
+      section.className = 'product';
+      section.id = `product-${product.id}`;
+
+      // Title
+      const title = document.createElement('h2');
+      title.textContent = product.name;
+      section.appendChild(title);
+
+      // Price display
+      const priceDisplay = document.createElement('div');
+      priceDisplay.className = 'price-display';
+      priceDisplay.textContent = `$${product.basePrice.toFixed(2)}`;
+      section.appendChild(priceDisplay);
+
+      // Base price display
+      const basePriceDisplay = document.createElement('div');
+      basePriceDisplay.className = 'base-price';
+      basePriceDisplay.textContent = `Base Price: $${product.basePrice.toFixed(2)}`;
+      section.appendChild(basePriceDisplay);
+
+      // Freeze price button
+      const freezeBtn = document.createElement('button');
+      freezeBtn.className = 'freeze-btn';
+      freezeBtn.textContent = 'Freeze Price';
+      freezeBtn.title = 'Freeze the current price for 30 seconds';
+      section.appendChild(freezeBtn);
+
+      // Canvas for price history chart
+      const canvas = document.createElement('canvas');
+      canvas.id = `chart-${product.id}`;
+      section.appendChild(canvas);
+
+      // Setup Chart.js chart
+      const ctx = canvas.getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Price over time',
+            data: [],
+            borderColor: '#00D4FF',
+            backgroundColor: 'rgba(0, 212, 255, 0.2)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              display: false
+            },
+            y: {
+              beginAtZero: false,
+              ticks: {
+                color: '#00d4ff',
+                font: { weight: '700' }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#00d4ff' }
+            },
+            tooltip: {
+              enabled: true,
+              backgroundColor: '#007BFF',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff'
+            }
+          }
+        }
+      });
+
+      // Initialize history with the base price
+      productStates.set(product.id, {
+        priceHistory: [{ time: Date.now(), price: product.basePrice }],
+        freezeUntil: null,
+        currentPrice: product.basePrice,
+        chart,
+        priceDisplay,
+        freezeBtn
+      });
+
+      // Freeze button handler
+      freezeBtn.addEventListener('click', () => {
+        const state = productStates.get(product.id);
+        if (state.freezeUntil === null || Date.now() > state.freezeUntil) {
+          const newFreezeUntil = Date.now() + freezeDurationMs;
+          state.freezeUntil = newFreezeUntil;
+          freezeBtn.disabled = true;
+          freezeBtn.textContent = 'Price Frozen ⏳';
+          // After freeze duration, enable button again and update price
+          setTimeout(() => {
+            state.freezeUntil = null;
+            freezeBtn.disabled = false;
+            freezeBtn.textContent = 'Freeze Price';
+            updatePrice(product.id);
+          }, freezeDurationMs);
+        }
+      });
+
+      return section;
+    }
+
+    // Calculate dynamic price based on demand (holiday mode)
+    function calculateDynamicPrice(product) {
+      let price = product.basePrice;
+      if (holidayMode) {
+        price = price * holidayMultiplier;
+      }
+      return price;
+    }
+
+    // Update price for a product, respecting freeze state
+    function updatePrice(id) {
+      const state = productStates.get(id);
+      const product = products.find(p => p.id === id);
+      if (!state || !product) return;
+
+      const now = Date.now();
+
+      if (state.freezeUntil !== null && now < state.freezeUntil) {
+        // Price freeze in effect - keep current price
+        return;
+      }
+
+      const newPrice = calculateDynamicPrice(product);
+      if (newPrice !== state.currentPrice) {
+        state.currentPrice = newPrice;
+        // Update price display
+        state.priceDisplay.textContent = `$${newPrice.toFixed(2)}`;
+
+        // Add new price data point to history
+        state.priceHistory.push({ time: now, price: newPrice });
+
+        // Keep only last 30 points for clarity
+        if (state.priceHistory.length > 30) {
+          state.priceHistory.shift();
+        }
+
+        // Update chart
+        const labels = state.priceHistory.map((pt, i) => {
+          const d = new Date(pt.time);
+          return d.toLocaleTimeString();
+        });
+        const data = state.priceHistory.map(pt => pt.price);
+
+        state.chart.data.labels = labels;
+        state.chart.data.datasets[0].data = data;
+        state.chart.update();
+      }
+    }
+
+    // Update all products prices
+    function updateAllPrices() {
+      products.forEach(p => updatePrice(p.id));
+    }
+
+    // Initial rendering of products
+    function renderProducts() {
+      products.forEach(product => {
+        const card = createProductCard(product);
+        container.appendChild(card);
+      });
+      updateAllPrices();
+    }
+
+    // Holiday toggle button
+    const holidayToggleBtn = document.getElementById('toggleHoliday');
+    holidayToggleBtn.addEventListener('click', () => {
+      holidayMode = !holidayMode;
+      holidayToggleBtn.textContent = `Holiday Mode: ${holidayMode ? 'ON (+20%)' : 'OFF'}`;
+      holidayToggleBtn.classList.toggle('active', holidayMode);
+      updateAllPrices();
+    });
+
+    // Auto-update prices every 5 seconds to simulate demand changes
+    setInterval(() => {
+      updateAllPrices();
+    }, 5000);
+
+    // Initial setup
+    renderProducts();
+
+  })();
+</script>
+</body>
+</html>
+
