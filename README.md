@@ -9,7 +9,7 @@
 ## 🔗 Live Project
 
 🚀 **Netlify Deployment:**  
-👉 [View Live Site](https://app.netlify.com/projects/brilliant-tulumba-f6fa71/deploys/6824ad96651fbd21149154ac)
+👉 [View Live Site]([https://app.netlify.com/projects/brilliant-tulumba-f6fa71/deploys/6824ad96651fbd21149154ac](https://brilliant-tulumba-f6fa71.netlify.app/))
 
 ---
 
